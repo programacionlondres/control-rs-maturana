@@ -1270,26 +1270,45 @@ function capturar(){
   var btn=document.getElementById('btn-cap');
   btn.textContent='Generando...';
   btn.disabled=true;
-  var target=document.body;
+  var target=document.getElementById('svg-wrap');
   html2canvas(target,{
     scale:2,
     useCORS:true,
-    backgroundColor:'#f0f0ec',
-    scrollY:0,
-    windowWidth:document.body.scrollWidth,
-    windowHeight:document.body.scrollHeight
-  }).then(function(canvas){
-    var a=document.createElement('a');
-    a.download='reporte_rs_maturana_'+new Date().toISOString().slice(0,10)+'.png';
-    a.href=canvas.toDataURL('image/png');
-    a.click();
-    btn.textContent='Imagen';
-    btn.disabled=false;
-    showT('Imagen descargada');
-  }).catch(function(){
-    btn.textContent='Imagen';
-    btn.disabled=false;
-    showT('Error al generar imagen');
+    backgroundColor:'#ffffff',
+    scrollX:0,
+    scrollY:-window.scrollY
+  }).then(function(svgCanvas){
+    // Capturar header + resumen + filtros + plano
+    var topEl=document.querySelector('.header');
+    var bottomEl=document.getElementById('svg-wrap');
+    var topRect=topEl.getBoundingClientRect();
+    var bottomRect=bottomEl.getBoundingClientRect();
+    var totalH=bottomRect.bottom-topRect.top;
+    var totalW=Math.max(topEl.offsetWidth,bottomEl.offsetWidth);
+
+    html2canvas(document.body,{
+      scale:2,
+      useCORS:true,
+      backgroundColor:'#f0f0ec',
+      x:0,
+      y:window.scrollY+topRect.top,
+      width:document.body.clientWidth,
+      height:totalH,
+      windowWidth:document.body.clientWidth,
+      windowHeight:totalH
+    }).then(function(canvas){
+      var a=document.createElement('a');
+      a.download='reporte_rs_maturana_'+new Date().toISOString().slice(0,10)+'.png';
+      a.href=canvas.toDataURL('image/png');
+      a.click();
+      btn.textContent='Imagen';
+      btn.disabled=false;
+      showT('Imagen descargada');
+    }).catch(function(){
+      btn.textContent='Imagen';
+      btn.disabled=false;
+      showT('Error al generar imagen');
+    });
   });
 }
 var dias=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
