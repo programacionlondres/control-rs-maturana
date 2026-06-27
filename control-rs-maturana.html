@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Control de Rs — Enrique Maturana</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh}
+.header{background:#fff;border-bottom:1px solid #e0e0db;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:10}
+.titulo{font-size:16px;font-weight:600;color:#1a1a1a}
+.subtitulo{font-size:12px;color:#888}
+.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;padding:1rem 1.25rem}
+.card-stat{background:#fff;border-radius:10px;border:1px solid #e0e0db;padding:0.75rem 0.5rem;text-align:center}
+.card-stat .num{font-size:22px;font-weight:600;color:#1a1a1a}
+.card-stat .lbl{font-size:11px;color:#888;margin-top:2px}
+.barra-prog{height:6px;background:#e0e0db;border-radius:99px;margin:0 1.25rem 0.4rem;overflow:hidden}
+.barra-fill{height:100%;background:#1D9E75;border-radius:99px;transition:width 0.5s}
+.pct-label{font-size:11px;color:#888;padding:0 1.25rem 0.75rem;text-align:right}
+.filtros{display:flex;gap:6px;padding:0 1.25rem 0.75rem;flex-wrap:wrap;align-items:center}
+.filtros span{font-size:12px;color:#888}
+.btn-filtro{font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid #d0d0cb;background:#fff;cursor:pointer;color:#666}
+.btn-filtro.activo{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-header{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid #d0d0cb;background:#fff;cursor:pointer;color:#444;display:flex;align-items:center;gap:4px}
+.btn-header:hover{background:#f5f5f3}
+.simbolo{display:flex;flex-wrap:wrap;gap:8px;padding:0 1.25rem 0.75rem}
+.sim-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#666}
+.sim-caja{width:14px;height:14px;border-radius:3px;border:1px solid}
+.manzanas{padding:0 1.25rem 2rem}
+.mz-bloque{background:#fff;border-radius:12px;border:1px solid #e0e0db;padding:1rem;margin-bottom:0.75rem}
+.mz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
+.mz-titulo{font-size:13px;font-weight:600;color:#444}
+.mz-stats{font-size:11px;color:#888}
+.grid-casas{display:flex;flex-wrap:wrap;gap:5px}
+.casa{width:38px;height:38px;border-radius:8px;border:1px solid #d0d0cb;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:9px;font-weight:600;color:#888;background:#fff;transition:transform 0.1s,box-shadow 0.1s;user-select:none}
+.casa:hover{transform:scale(1.12);box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:2;position:relative}
+.casa .mz-label{font-size:7px;opacity:0.6;line-height:1}
+.casa .lote-label{font-size:11px;line-height:1.2}
+.casa.sg{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
+.casa.r0{background:#FAEEDA;border-color:#EF9F27;color:#633806}
+.casa.r1{background:#EAF3DE;border-color:#639922;color:#27500A}
+.casa.rf{background:#1D9E75;border-color:#0F6E56;color:#fff}
+.casa.oculta{opacity:0.12;pointer-events:none}
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:flex-end;justify-content:center;z-index:100}
+@media(min-width:480px){.modal-overlay{align-items:center}}
+.modal-overlay.visible{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:1.5rem 1.25rem 2rem;width:100%;max-width:420px}
+@media(min-width:480px){.modal{border-radius:14px;padding:1.5rem}}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:2px;color:#1a1a1a}
+.modal .sub{font-size:12px;color:#888;margin-bottom:1.25rem}
+.opciones{display:flex;flex-direction:column;gap:8px}
+.opt-btn{padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0db;background:#f9f9f7;cursor:pointer;font-size:14px;text-align:left;color:#1a1a1a;transition:all 0.15s}
+.opt-btn:hover{border-color:#aaa;background:#fff}
+.opt-btn.sel{font-weight:600}
+.opt-btn.sel.nd{border-color:#888;background:#f0f0ec}
+.opt-btn.sel.sg{border-color:#378ADD;background:#E6F1FB;color:#0C447C}
+.opt-btn.sel.r0{border-color:#EF9F27;background:#FAEEDA;color:#633806}
+.opt-btn.sel.r1{border-color:#639922;background:#EAF3DE;color:#27500A}
+.opt-btn.sel.rf{border-color:#0F6E56;background:#E1F5EE;color:#085041}
+.modal-btns{display:flex;gap:8px;margin-top:1.25rem}
+.modal-btns button{flex:1;padding:10px;border-radius:10px;border:1px solid #d0d0cb;background:#f5f5f3;cursor:pointer;font-size:14px;color:#1a1a1a;font-weight:500}
+.btn-guardar{background:#1D9E75!important;color:#fff!important;border-color:#0F6E56!important}
+.pin-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:200}
+.pin-overlay.visible{display:flex}
+.pin-modal{background:#fff;border-radius:14px;padding:1.5rem;width:280px;max-width:90vw}
+.pin-modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
+.pin-input{width:100%;padding:10px;border-radius:10px;border:1.5px solid #d0d0cb;font-size:20px;letter-spacing:6px;text-align:center;color:#1a1a1a;margin-bottom:6px}
+.pin-input:focus{outline:none;border-color:#378ADD}
+.pin-err{font-size:12px;color:#A32D2D;margin-bottom:8px;display:none;text-align:center}
+.admin-badge{font-size:11px;background:#EAF3DE;color:#27500A;border:1px solid #639922;border-radius:99px;padding:2px 8px;display:none}
+.admin-badge.visible{display:inline-block}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:8px 18px;border-radius:99px;opacity:0;transition:opacity 0.3s;z-index:300;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="titulo">Control de Rs — Enrique Maturana</div>
+    <div class="subtitulo" id="fecha-hoy"></div>
+  </div>
+  <div style="display:flex;gap:6px;align-items:center">
+    <span class="admin-badge" id="admin-badge">✓ Admin</span>
+    <button class="btn-header" onclick="abrirPinOverlay()">
+      <i class="ti ti-lock" style="font-size:14px"></i> Admin
+    </button>
+    <button class="btn-header" onclick="exportarResumen()">
+      <i class="ti ti-download" style="font-size:14px"></i>
+    </button>
+  </div>
+</div>
+
+<div class="resumen" id="resumen"></div>
+<div class="barra-prog"><div class="barra-fill" id="barra"></div></div>
+<div class="pct-label" id="pct-label"></div>
+
+<div class="filtros">
+  <span>Filtrar:</span>
+  <button class="btn-filtro activo" id="f-todos" onclick="filtrar('todos')">Todos</button>
+  <button class="btn-filtro" id="f-sg" onclick="filtrar('sg')">Sello gris</button>
+  <button class="btn-filtro" id="f-r0" onclick="filtrar('r0')">R0</button>
+  <button class="btn-filtro" id="f-r1" onclick="filtrar('r1')">R1</button>
+  <button class="btn-filtro" id="f-rf" onclick="filtrar('rf')">RF ✓</button>
+  <button class="btn-filtro" id="f-nd" onclick="filtrar('nd')">Sin estado</button>
+</div>
+
+<div class="simbolo">
+  <div class="sim-item"><div class="sim-caja" style="background:#fff;border-color:#ccc"></div>Sin estado</div>
+  <div class="sim-item"><div class="sim-caja" style="background:#E6F1FB;border-color:#378ADD"></div>Sello gris</div>
+  <div class="sim-item"><div class="sim-caja" style="background:#FAEEDA;border-color:#EF9F27"></div>R0</div>
+  <div class="sim-item"><div class="sim-caja" style="background:#EAF3DE;border-color:#639922"></div>R1</div>
+  <div class="sim-item"><div class="sim-caja" style="background:#1D9E75;border-color:#0F6E56"></div>RF ✓</div>
+</div>
+
+<div class="manzanas" id="manzanas"></div>
+
+<!-- Modal estado vivienda -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModalSiFuera(event)">
+  <div class="modal">
+    <h3 id="modal-titulo">Vivienda</h3>
+    <div class="sub" id="modal-sub"></div>
+    <div class="opciones" id="modal-opciones"></div>
+    <div class="modal-btns">
+      <button onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-guardar" onclick="guardarEstado()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal PIN -->
+<div class="pin-overlay" id="pin-overlay" onclick="cerrarPinSiFuera(event)">
+  <div class="pin-modal">
+    <h3><i class="ti ti-lock" style="font-size:14px;margin-right:6px"></i>Acceso admin</h3>
+    <input type="password" class="pin-input" id="pin-input" placeholder="• • • •" maxlength="6" oninput="verificarPin()" />
+    <div class="pin-err" id="pin-err">PIN incorrecto</div>
+    <div class="modal-btns">
+      <button onclick="cerrarPinOverlay()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const PIN_CORRECTO = '0525';
+let adminMode = false;
+let filtroActivo = 'todos';
+let casaSeleccionada = null;
+let estadoSeleccionado = null;
+let pendienteCasa = null;
+
+const MANZANAS = {
+  'F': 36, 'B': 24, 'C': 20, 'D': 18,
+  'E': 10, 'G': 28, 'J': 26, 'K': 6,
+  'H': 14, 'A': 32
+};
+
+const ESTADOS = [
+  {val:'nd',  label:'Sin estado',  cls:'nd'},
+  {val:'sg',  label:'Sello gris',  cls:'sg'},
+  {val:'r0',  label:'R0',          cls:'r0'},
+  {val:'r1',  label:'R1',          cls:'r1'},
+  {val:'rf',  label:'RF ✓',        cls:'rf'},
+];
+
+function key(mz, lote){ return `em_mz${mz}_l${lote}`; }
+function getE(mz, lote){ return localStorage.getItem(key(mz,lote)) || 'nd'; }
+function setE(mz, lote, e){ if(e==='nd') localStorage.removeItem(key(mz,lote)); else localStorage.setItem(key(mz,lote),e); }
+
+function contarMz(mz){
+  let sg=0,r0=0,r1=0,rf=0,nd=0;
+  for(let l=1;l<=MANZANAS[mz];l++){
+    const e=getE(mz,l);
+    if(e==='sg')sg++; else if(e==='r0')r0++; else if(e==='r1')r1++; else if(e==='rf')rf++; else nd++;
+  }
+  return {sg,r0,r1,rf,nd,total:MANZANAS[mz]};
+}
+
+function renderResumen(){
+  let tot=0,sg=0,r0=0,r1=0,rf=0;
+  for(const mz in MANZANAS){
+    const c=contarMz(mz);
+    tot+=c.total; sg+=c.sg; r0+=c.r0; r1+=c.r1; rf+=c.rf;
+  }
+  const nd=tot-sg-r0-r1-rf;
+  const pct=tot?Math.round((rf/tot)*100):0;
+  document.getElementById('resumen').innerHTML=`
+    <div class="card-stat"><div class="num">${tot}</div><div class="lbl">Total</div></div>
+    <div class="card-stat"><div class="num" style="color:#185FA5">${sg}</div><div class="lbl">Sello gris</div></div>
+    <div class="card-stat"><div class="num" style="color:#BA7517">${r0}</div><div class="lbl">R0</div></div>
+    <div class="card-stat"><div class="num" style="color:#3B6D11">${r1}</div><div class="lbl">R1</div></div>
+    <div class="card-stat"><div class="num" style="color:#1D9E75">${rf}</div><div class="lbl">RF ✓</div></div>
+    <div class="card-stat"><div class="num" style="color:#888">${nd}</div><div class="lbl">Sin estado</div></div>
+  `;
+  document.getElementById('barra').style.width=pct+'%';
+  document.getElementById('pct-label').textContent=`Avance a RF: ${pct}% (${rf} de ${tot} viviendas)`;
+}
+
+function renderManzanas(){
+  const cont=document.getElementById('manzanas');
+  cont.innerHTML='';
+  for(const mz in MANZANAS){
+    const c=contarMz(mz);
+    const bloque=document.createElement('div');
+    bloque.className='mz-bloque';
+    bloque.innerHTML=`
+      <div class="mz-header">
+        <div class="mz-titulo">Manzana ${mz} <span style="font-weight:400;color:#aaa">(${c.total} lotes)</span></div>
+        <div class="mz-stats">SG:${c.sg} R0:${c.r0} R1:${c.r1} <span style="color:#1D9E75;font-weight:600">RF:${c.rf}</span></div>
+      </div>
+      <div class="grid-casas" id="grid-${mz}"></div>
+    `;
+    cont.appendChild(bloque);
+    const grid=document.getElementById('grid-'+mz);
+    for(let l=1;l<=MANZANAS[mz];l++){
+      const e=getE(mz,l);
+      const div=document.createElement('div');
+      div.className='casa'+(e!=='nd'?' '+e:'');
+      if(filtroActivo!=='todos'&&e!==filtroActivo) div.classList.add('oculta');
+      div.dataset.mz=mz; div.dataset.lote=l;
+      div.innerHTML=`<span class="mz-label">MZ.${mz}</span><span class="lote-label">${l}</span>`;
+      div.addEventListener('click',()=>clickCasa(mz,l));
+      grid.appendChild(div);
+    }
+  }
+}
+
+function clickCasa(mz,lote){
+  if(!adminMode){ pendienteCasa={mz,lote}; abrirPinOverlay(); return; }
+  abrirModal(mz,lote);
+}
+
+function abrirModal(mz,lote){
+  casaSeleccionada={mz,lote};
+  estadoSeleccionado=getE(mz,lote);
+  document.getElementById('modal-titulo').textContent=`Manzana ${mz} — Lote ${lote}`;
+  document.getElementById('modal-sub').textContent='Selecciona el estado de recepción';
+  const ops=document.getElementById('modal-opciones');
+  ops.innerHTML='';
+  ESTADOS.forEach(e=>{
+    const b=document.createElement('button');
+    b.className='opt-btn'+(estadoSeleccionado===e.val?' sel '+e.cls:'');
+    b.textContent=e.label;
+    b.onclick=()=>selEstado(e.val);
+    ops.appendChild(b);
+  });
+  document.getElementById('modal-overlay').classList.add('visible');
+}
+
+function selEstado(v){
+  estadoSeleccionado=v;
+  document.querySelectorAll('#modal-opciones .opt-btn').forEach((b,i)=>{
+    b.className='opt-btn'+(ESTADOS[i].val===v?' sel '+ESTADOS[i].cls:'');
+  });
+}
+
+function guardarEstado(){
+  if(!casaSeleccionada) return;
+  setE(casaSeleccionada.mz,casaSeleccionada.lote,estadoSeleccionado);
+  cerrarModal();
+  renderResumen();
+  renderManzanas();
+  filtrar(filtroActivo);
+  showToast('Estado guardado');
+}
+
+function cerrarModal(){ document.getElementById('modal-overlay').classList.remove('visible'); casaSeleccionada=null; }
+function cerrarModalSiFuera(e){ if(e.target===document.getElementById('modal-overlay')) cerrarModal(); }
+
+function filtrar(f){
+  filtroActivo=f;
+  document.querySelectorAll('.btn-filtro').forEach(b=>b.classList.remove('activo'));
+  document.getElementById('f-'+f).classList.add('activo');
+  document.querySelectorAll('.casa').forEach(c=>{
+    const e=getE(c.dataset.mz,c.dataset.lote);
+    c.classList.toggle('oculta', f!=='todos'&&e!==f);
+  });
+}
+
+function abrirPinOverlay(){
+  document.getElementById('pin-input').value='';
+  document.getElementById('pin-err').style.display='none';
+  document.getElementById('pin-overlay').classList.add('visible');
+  setTimeout(()=>document.getElementById('pin-input').focus(),150);
+}
+function cerrarPinOverlay(){ document.getElementById('pin-overlay').classList.remove('visible'); pendienteCasa=null; }
+function cerrarPinSiFuera(e){ if(e.target===document.getElementById('pin-overlay')) cerrarPinOverlay(); }
+
+function verificarPin(){
+  const v=document.getElementById('pin-input').value;
+  if(v.length>=4){
+    if(v===PIN_CORRECTO){
+      adminMode=true;
+      document.getElementById('admin-badge').classList.add('visible');
+      cerrarPinOverlay();
+      if(pendienteCasa){ abrirModal(pendienteCasa.mz,pendienteCasa.lote); pendienteCasa=null; }
+      showToast('Modo admin activado');
+    } else {
+      document.getElementById('pin-err').style.display='block';
+    }
+  } else {
+    document.getElementById('pin-err').style.display='none';
+  }
+}
+
+function exportarResumen(){
+  const hoy=new Date().toLocaleDateString('es-CL');
+  let txt=`CONTROL DE RS — ENRIQUE MATURANA\n${hoy}\n${'='.repeat(40)}\n\n`;
+  let totG=0,sfG=0,r0G=0,r1G=0,rfG=0;
+  for(const mz in MANZANAS){
+    const c=contarMz(mz);
+    totG+=c.total; sfG+=c.sg; r0G+=c.r0; r1G+=c.r1; rfG+=c.rf;
+    const pct=Math.round((c.rf/c.total)*100);
+    txt+=`Manzana ${mz.padEnd(2)} | Total:${String(c.total).padStart(3)} | SG:${String(c.sg).padStart(3)} R0:${String(c.r0).padStart(3)} R1:${String(c.r1).padStart(3)} RF:${String(c.rf).padStart(3)} | ${pct}% RF\n`;
+  }
+  const pctG=Math.round((rfG/totG)*100);
+  txt+=`\n${'='.repeat(40)}\nTOTAL      | Total:${String(totG).padStart(3)} | SG:${String(sfG).padStart(3)} R0:${String(r0G).padStart(3)} R1:${String(r1G).padStart(3)} RF:${String(rfG).padStart(3)} | ${pctG}% RF\n`;
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`control_rs_maturana_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  showToast('Resumen exportado');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2000);
+}
+
+const dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const hoy=new Date();
+document.getElementById('fecha-hoy').textContent=`${dias[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
+
+renderResumen();
+renderManzanas();
+</script>
+</body>
+</html>
