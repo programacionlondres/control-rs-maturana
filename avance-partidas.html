@@ -125,16 +125,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 </head>
 <body>
 <div class="header">
-  <div><div class="titulo">Avance Partidas - Enrique Maturana</div><div class="subtitulo" id="fh"></div></div>
-  <div class="header-btns">
+  <div>
+    <div class="titulo">Avance Partidas - Enrique Maturana</div>
+    <div class="subtitulo" id="fh"></div>
+  </div>
+  <div class="header-btns" style="align-items:center">
     <span class="abadge" id="ab">Admin</span>
+    <a href="index.html" class="bh" style="text-decoration:none;background:rgba(255,255,255,0.15);color:#fff">&#8592; Inicio</a>
     <button class="bh bh-admin" onclick="openPin()">Admin</button>
     <button class="bh bh-rep" onclick="abrirReporte()">Reporte</button>
     <button class="bh" style="background:#156082;color:#fff" onclick="abrirHistorico()">Historial</button>
     <button class="bh" style="background:#FF6B6B;color:#fff" onclick="cerrarDia()">Cerrar dia</button>
     <button class="bh bh-img" onclick="capturar()">Imagen</button>
   </div>
-</div>
+</div></div>
 <div class="partida-wrap">
   <div class="partida-label">Selecciona la partida:</div>
   <select class="partida-select" id="sel-partida" onchange="cambiarPartida()">
@@ -1158,9 +1162,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 </div>
 <div class="mr" id="mr" onclick="if(event.target===this)cerrarReporte()">
   <div class="mrd" id="mrd">
-    <h3>Reporte diario</h3>
+    <h3 style="color:#1A1846;margin-bottom:.5rem">Reporte de avance</h3>
+    <div style="display:flex;gap:16px;border-bottom:1px solid #e0e0db;margin-bottom:.75rem;padding-bottom:4px">
+      <span id="tab-diario" onclick="mostrarTabDiario()" style="font-size:12px;cursor:pointer;padding-bottom:4px;border-bottom:2px solid #E18426;font-weight:700;color:#1A1846">Reporte diario</span>
+      <span id="tab-semana" onclick="mostrarTabSemana()" style="font-size:12px;cursor:pointer;padding-bottom:4px;border-bottom:2px solid transparent;color:#888">Cierre de semana</span>
+    </div>
     <div class="rep-cierre" id="rep-fecha"></div>
-    <table class="rep-tabla" id="rep-tabla"></table>
+    <div style="overflow-x:auto;margin-bottom:.75rem">
+      <table class="rep-tabla" id="rep-tabla" style="min-width:500px"></table>
+    </div>
     <div class="rep-btns">
       <button class="btn-capturar" onclick="capturarReporte()">Descargar imagen</button>
       <button class="btn-cerrar-rep" onclick="cerrarReporte()">Cerrar</button>
@@ -1389,46 +1399,248 @@ function vp(){
 }
 
 function abrirReporte(){
+  document.getElementById("mr").classList.add("v");
+  mostrarTabDiario();
+}
+
+function mostrarTabDiario(){
+  document.getElementById("tab-diario").style.fontWeight="700";
+  document.getElementById("tab-diario").style.borderBottom="2px solid #E18426";
+  document.getElementById("tab-semana").style.fontWeight="400";
+  document.getElementById("tab-semana").style.borderBottom="2px solid transparent";
+  
   var hoy=new Date();
-  var dias=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
-  var meses=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-  document.getElementById("rep-fecha").textContent=
-    "Reporte al "+dias[hoy.getDay()]+" "+hoy.getDate()+" de "+meses[hoy.getMonth()]+" "+hoy.getFullYear();
+  var diasN=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
+  var mesesN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  document.getElementById("rep-fecha").textContent="Reporte al "+diasN[hoy.getDay()]+" "+hoy.getDate()+" de "+mesesN[hoy.getMonth()]+" "+hoy.getFullYear();
 
+  // Obtener programa desde Sheets
+  fetch(SCRIPT_URL+"?accion=get_programa")
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var prog={};
+      if(data.ok && data.programa){
+        for(var i=0;i<data.programa.length;i++){
+          prog[data.programa[i].nombre]=data.programa[i].dias;
+        }
+      }
+      generarTablaDiaria(prog, hoy);
+    })
+    .catch(function(){
+      generarTablaDiaria({}, hoy);
+    });
+}
+
+function generarTablaDiaria(prog, hoy){
+  var diasSem=["L","M","X","J","V"];
   var tabla=document.getElementById("rep-tabla");
-  tabla.innerHTML="<tr><th>N</th><th>PARTIDA</th><th>PROG<br>TOTAL</th><th>EJEC<br>AC</th><th>%</th><th>HOY</th></tr>";
-
-  var totProg=0,totEj=0,totHoy=0;
+  
+  // Header
+  var th="<tr style='background:#1A1846;color:#fff'><th style='padding:4px 3px;font-size:9px'>N</th><th style='padding:4px 3px;font-size:9px;text-align:left'>PARTIDA</th>";
+  for(var d=0;d<5;d++){
+    th+="<th colspan='2' style='padding:4px 3px;font-size:9px'>"+diasSem[d]+"</th>";
+  }
+  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#E18426'>SEMANA</th></tr>";
+  
+  var th2="<tr style='background:#2D2B5E;color:#fff'><th></th><th></th>";
+  for(var d=0;d<6;d++){
+    th2+="<th style='padding:3px 2px;font-size:8px;color:#90C8FF'>PR</th><th style='padding:3px 2px;font-size:8px;color:#92D050'>REAL</th>";
+  }
+  th2+="</tr>";
+  
+  tabla.innerHTML=th+th2;
+  
+  var totPR=[0,0,0,0,0,0],totREAL=[0,0,0,0,0,0];
+  
   for(var i=0;i<PARTIDAS.length;i++){
     var p=PARTIDAS[i];
-    var ej=0,ejHoy=0,tot=TOTAL;
+    var ejTotal=0,ejHoy=0;
     for(var m=0;m<MANZANAS.length;m++){
       var mz=MANZANAS[m];
       for(var j=0;j<mz.lotes.length;j++){
-        if(getEj(p.id,mz.id,mz.lotes[j])) ej++;
+        if(getEj(p.id,mz.id,mz.lotes[j])) ejTotal++;
         if(getEjHoy(p.id,mz.id,mz.lotes[j])) ejHoy++;
       }
     }
-    var pct=Math.round(ej/tot*100);
-    totEj+=ej; totHoy+=ejHoy;
-    var trClass=ejHoy>0?" style='background:#FFF9E6'":" ";
-    tabla.innerHTML+="<tr"+trClass+"><td>"+(i+1)+"</td><td>"+p.nombre+"</td><td>"+tot+"</td><td>"+ej+"</td><td>"+pct+"%</td><td>"+(ejHoy>0?"<b style='color:#FF8C00'>+"+ejHoy+"</b>":"-")+"</td></tr>";
+    
+    var diasProg=prog[p.nombre]||[];
+    var prSem=0,realSem=ejHoy;
+    
+    var bg=i%2===0?"#F8F8F8":"#fff";
+    if(ejHoy>0) bg="#FFFBE6";
+    
+    var row="<tr style='background:"+bg+"'><td style='font-size:9px;text-align:center'>"+( i+1)+"</td>";
+    row+="<td style='font-size:9px;padding:3px 4px'>"+p.nombre+"</td>";
+    
+    for(var d=0;d<5;d++){
+      var pr=diasProg[d]?diasProg[d].pr:0;
+      prSem+=pr;
+      totPR[d]+=pr;
+      // REAL por dia: aproximacion desde ejHoy (hoy) o 0
+      var realDia=d===hoy.getDay()-1?ejHoy:0;
+      totREAL[d]+=realDia;
+      var pctDia=pr>0?Math.round(realDia/pr*100):"-";
+      var colReal=pr>0?(realDia>=pr?"#375623":"#A32D2D"):"#888";
+      row+="<td style='font-size:9px;text-align:center;color:#000080'>"+pr+"</td>";
+      row+="<td style='font-size:9px;text-align:center;color:"+colReal+";font-weight:600'>"+realDia+"</td>";
+    }
+    
+    totPR[5]+=prSem;
+    totREAL[5]+=realSem;
+    var colSem=prSem>0?(realSem>=prSem?"#375623":"#A32D2D"):"#888";
+    row+="<td style='font-size:9px;text-align:center;color:#000080;background:#FFF0D0'>"+prSem+"</td>";
+    row+="<td style='font-size:9px;text-align:center;font-weight:700;color:"+colSem+";background:#FFF0D0'>"+realSem+"</td>";
+    row+="</tr>";
+    tabla.innerHTML+=row;
   }
-  tabla.innerHTML+="<tr class='tot-row'><td colspan='2'>TOTAL</td><td>"+TOTAL+"</td><td>"+totEj+"</td><td>-</td><td>+"+totHoy+"</td></tr>";
+  
+  // Fila totales
+  var totRow="<tr style='background:#1A1846;color:#fff'><td colspan='2' style='font-size:9px;font-weight:700;padding:4px'>TOTAL</td>";
+  for(var d=0;d<6;d++){
+    totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totPR[d]+"</td>";
+    totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+"</td>";
+  }
+  totRow+="</tr>";
+  tabla.innerHTML+=totRow;
+}
 
-  document.getElementById("mr").classList.add("v");
+function mostrarTabSemana(){
+  document.getElementById("tab-semana").style.fontWeight="700";
+  document.getElementById("tab-semana").style.borderBottom="2px solid #E18426";
+  document.getElementById("tab-diario").style.fontWeight="400";
+  document.getElementById("tab-diario").style.borderBottom="2px solid transparent";
+
+  var hoy=new Date();
+  var diasN=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
+  var mesesN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  document.getElementById("rep-fecha").textContent="Cierre de semana al "+diasN[hoy.getDay()]+" "+hoy.getDate()+" de "+mesesN[hoy.getMonth()]+" "+hoy.getFullYear();
+
+  var tabla=document.getElementById("rep-tabla");
+  tabla.innerHTML="<tr style='background:#1A1846;color:#fff'>"+
+    "<th style='padding:5px 3px;font-size:9px'>N</th>"+
+    "<th style='padding:5px 3px;font-size:9px;text-align:left'>PARTIDA</th>"+
+    "<th style='padding:5px 3px;font-size:9px'>Av.AC<br>SEM ANT</th>"+
+    "<th style='padding:5px 3px;font-size:9px'>Av.AC<br>SEM ACT</th>"+
+    "<th style='padding:5px 3px;font-size:9px'>DIF</th>"+
+    "<th style='padding:5px 3px;font-size:9px'>%<br>TOTAL</th>"+
+    "</tr>";
+
+  // Buscar snapshot del VIERNES PASADO
+  var viernesPasado=new Date(hoy);
+  var diaSemana=hoy.getDay(); // 0=dom, 1=lun...5=vie, 6=sab
+  var diasHastaViernesPasado=diaSemana===0?8:diaSemana+1;
+  viernesPasado.setDate(hoy.getDate()-diasHastaViernesPasado);
+  var fechaViernes=viernesPasado.toISOString().slice(0,10);
+
+  document.getElementById("rep-fecha").textContent+=" (vs viernes "+fechaViernes+")";
+
+  // Obtener todos los snapshots del viernes pasado
+  fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes+"&partida=P01")
+    .then(function(r){return r.json();})
+    .catch(function(){return {ok:false,datos:[]};})
+    .then(function(snap){
+      // Construir mapa de ejecutados semana anterior por partida
+      // Necesitamos todos los snapshots — hacemos una por partida
+      var promesas=[];
+      var snapsPorPartida={};
+      
+      function cargarPartida(idx){
+        if(idx>=PARTIDAS.length){
+          generarTablaCierre(snapsPorPartida);
+          return;
+        }
+        var pid=PARTIDAS[idx].id;
+        fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes+"&partida="+pid)
+          .then(function(r){return r.json();})
+          .catch(function(){return {ok:false,datos:[]};})
+          .then(function(data){
+            var count=0;
+            if(data.ok&&data.datos){
+              for(var s=0;s<data.datos.length;s++){
+                if(data.datos[s].ejecutado==1) count++;
+              }
+            }
+            snapsPorPartida[pid]=count;
+            cargarPartida(idx+1);
+          });
+      }
+      cargarPartida(0);
+    });
+}
+
+function generarTablaCierre(snapsPorPartida){
+  var tabla=document.getElementById("rep-tabla");
+  var totAnt=0,totAct=0;
+  
+  for(var i=0;i<PARTIDAS.length;i++){
+    var p=PARTIDAS[i];
+    var ejActual=0;
+    for(var m=0;m<MANZANAS.length;m++){
+      var mz=MANZANAS[m];
+      for(var j=0;j<mz.lotes.length;j++){
+        if(getEj(p.id,mz.id,mz.lotes[j])) ejActual++;
+      }
+    }
+    
+    var ejAnterior=snapsPorPartida[p.id]||0;
+    var dif=ejActual-ejAnterior;
+    var pct=Math.round(ejActual/TOTAL*100);
+    totAnt+=ejAnterior; totAct+=ejActual;
+    
+    var bg=i%2===0?"#F8F8F8":"#fff";
+    if(dif>0) bg="#F0FFF0";
+    var colDif=dif>0?"#375623":dif<0?"#A32D2D":"#888";
+    
+    tabla.innerHTML+="<tr style='background:"+bg+"'>"+
+      "<td style='font-size:9px;text-align:center;padding:4px 3px'>"+(i+1)+"</td>"+
+      "<td style='font-size:9px;padding:4px'>"+p.nombre+"</td>"+
+      "<td style='font-size:9px;text-align:center;color:#000080'>"+ejAnterior+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:700;color:#1A1846'>"+ejActual+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:700;color:"+colDif+"'>"+(dif>0?"+":"")+dif+"</td>"+
+      "<td style='font-size:9px;text-align:center'>"+pct+"%</td>"+
+      "</tr>";
+  }
+  
+  var difTot=totAct-totAnt;
+  tabla.innerHTML+="<tr style='background:#1A1846;color:#fff'>"+
+    "<td colspan='2' style='font-size:9px;font-weight:700;padding:5px 4px'>TOTAL</td>"+
+    "<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totAnt+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:#92D050'>"+totAct+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:#E18426'>"+(difTot>0?"+":"")+difTot+"</td>"+
+    "<td style='font-size:9px;text-align:center'>-</td>"+
+    "</tr>";
 }
 
 function cerrarReporte(){ document.getElementById("mr").classList.remove("v"); }
 
 function capturarReporte(){
   var el=document.getElementById("mrd");
-  html2canvas(el,{scale:2,backgroundColor:"#ffffff"}).then(function(canvas){
+  // Expandir temporalmente para capturar todo
+  var oldMax=el.style.maxHeight;
+  var oldOver=el.style.overflowY;
+  el.style.maxHeight="none";
+  el.style.overflowY="visible";
+  
+  html2canvas(el,{
+    scale:2,
+    backgroundColor:"#ffffff",
+    scrollX:0,
+    scrollY:0,
+    windowWidth:el.scrollWidth,
+    windowHeight:el.scrollHeight,
+    useCORS:true
+  }).then(function(canvas){
+    el.style.maxHeight=oldMax;
+    el.style.overflowY=oldOver;
     var a=document.createElement("a");
     a.download="reporte_partidas_"+new Date().toISOString().slice(0,10)+".png";
     a.href=canvas.toDataURL("image/png");
     a.click();
     showT("Imagen descargada");
+  }).catch(function(){
+    el.style.maxHeight=oldMax;
+    el.style.overflowY=oldOver;
+    showT("Error al generar imagen");
   });
 }
 
