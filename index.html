@@ -3,341 +3,1274 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control de Rs — Enrique Maturana</title>
+<title>Control de Rs - Enrique Maturana</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;min-height:100vh}
-.header{background:#fff;border-bottom:1px solid #e0e0db;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;position:sticky;top:0;z-index:10}
-.titulo{font-size:16px;font-weight:600;color:#1a1a1a}
-.subtitulo{font-size:12px;color:#888}
-.resumen{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;padding:1rem 1.25rem}
-.card-stat{background:#fff;border-radius:10px;border:1px solid #e0e0db;padding:0.75rem 0.5rem;text-align:center}
-.card-stat .num{font-size:22px;font-weight:600;color:#1a1a1a}
-.card-stat .lbl{font-size:11px;color:#888;margin-top:2px}
-.barra-prog{height:6px;background:#e0e0db;border-radius:99px;margin:0 1.25rem 0.4rem;overflow:hidden}
-.barra-fill{height:100%;background:#1D9E75;border-radius:99px;transition:width 0.5s}
-.pct-label{font-size:11px;color:#888;padding:0 1.25rem 0.75rem;text-align:right}
-.filtros{display:flex;gap:6px;padding:0 1.25rem 0.75rem;flex-wrap:wrap;align-items:center}
-.filtros span{font-size:12px;color:#888}
-.btn-filtro{font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid #d0d0cb;background:#fff;cursor:pointer;color:#666}
-.btn-filtro.activo{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.btn-header{font-size:12px;padding:5px 10px;border-radius:8px;border:1px solid #d0d0cb;background:#fff;cursor:pointer;color:#444;display:flex;align-items:center;gap:4px}
-.btn-header:hover{background:#f5f5f3}
-.simbolo{display:flex;flex-wrap:wrap;gap:8px;padding:0 1.25rem 0.75rem}
-.sim-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#666}
-.sim-caja{width:14px;height:14px;border-radius:3px;border:1px solid}
-.manzanas{padding:0 1.25rem 2rem}
-.mz-bloque{background:#fff;border-radius:12px;border:1px solid #e0e0db;padding:1rem;margin-bottom:0.75rem}
-.mz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem}
-.mz-titulo{font-size:13px;font-weight:600;color:#444}
+body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
+.header{background:#fff;border-bottom:1px solid #ddd;padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:20}
+.titulo{font-size:14px;font-weight:600}
+.subtitulo{font-size:11px;color:#888}
+.resumen{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:.6rem 1rem}
+.cs{background:#fff;border-radius:7px;border:1px solid #e0e0db;padding:.4rem .3rem;text-align:center}
+.cs .num{font-size:18px;font-weight:600}
+.cs .lbl{font-size:9px;color:#888;margin-top:1px}
+.bp{height:4px;background:#ddd;border-radius:99px;margin:0 1rem .25rem;overflow:hidden}
+.bpf{height:100%;background:#1D9E75;border-radius:99px;transition:width .5s}
+.ptxt{font-size:10px;color:#888;padding:0 1rem .4rem;text-align:right}
+.filtros{display:flex;gap:4px;padding:0 1rem .4rem;flex-wrap:wrap;align-items:center}
+.filtros span{font-size:11px;color:#888}
+.fb{font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#555}
+.fb.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.bh{font-size:11px;padding:4px 8px;border-radius:7px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#444;display:flex;align-items:center;gap:3px}
+.ley{display:flex;flex-wrap:wrap;gap:7px;padding:0 1rem .75rem}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:#555}
+.lc{width:12px;height:12px;border-radius:3px;border:1px solid}
+.svg-wrap{overflow-x:auto;padding:.5rem 1rem .75rem;background:#fff;margin:0 1rem .75rem;border-radius:10px;border:1px solid #e0e0db}
+.svg-wrap svg{max-width:100%;height:auto}
+.svg-label{font-size:10px;color:#888;padding:.5rem 1rem .25rem;font-weight:500}
+.manzanas{padding:0 1rem 2rem;display:flex;flex-direction:column;gap:10px}
+.mz-bloque{background:#fff;border-radius:10px;border:1px solid #e0e0db;padding:.75rem}
+.mz-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.mz-nombre{font-size:13px;font-weight:600;color:#002060}
 .mz-stats{font-size:11px;color:#888}
-.grid-casas{display:flex;flex-wrap:wrap;gap:5px}
-.casa{width:38px;height:38px;border-radius:8px;border:1px solid #d0d0cb;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:9px;font-weight:600;color:#888;background:#fff;transition:transform 0.1s,box-shadow 0.1s;user-select:none}
-.casa:hover{transform:scale(1.12);box-shadow:0 2px 8px rgba(0,0,0,0.12);z-index:2;position:relative}
-.casa .mz-label{font-size:7px;opacity:0.6;line-height:1}
-.casa .lote-label{font-size:11px;line-height:1.2}
-.casa.sg{background:#E6F1FB;border-color:#378ADD;color:#0C447C}
-.casa.r0{background:#FAEEDA;border-color:#EF9F27;color:#633806}
-.casa.r1{background:#EAF3DE;border-color:#639922;color:#27500A}
-.casa.rf{background:#1D9E75;border-color:#0F6E56;color:#fff}
-.casa.oculta{opacity:0.12;pointer-events:none}
-.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:flex-end;justify-content:center;z-index:100}
-@media(min-width:480px){.modal-overlay{align-items:center}}
-.modal-overlay.visible{display:flex}
-.modal{background:#fff;border-radius:16px 16px 0 0;padding:1.5rem 1.25rem 2rem;width:100%;max-width:420px}
-@media(min-width:480px){.modal{border-radius:14px;padding:1.5rem}}
-.modal h3{font-size:16px;font-weight:600;margin-bottom:2px;color:#1a1a1a}
-.modal .sub{font-size:12px;color:#888;margin-bottom:1.25rem}
-.opciones{display:flex;flex-direction:column;gap:8px}
-.opt-btn{padding:10px 14px;border-radius:10px;border:1.5px solid #e0e0db;background:#f9f9f7;cursor:pointer;font-size:14px;text-align:left;color:#1a1a1a;transition:all 0.15s}
-.opt-btn:hover{border-color:#aaa;background:#fff}
-.opt-btn.sel{font-weight:600}
-.opt-btn.sel.nd{border-color:#888;background:#f0f0ec}
-.opt-btn.sel.sg{border-color:#378ADD;background:#E6F1FB;color:#0C447C}
-.opt-btn.sel.r0{border-color:#EF9F27;background:#FAEEDA;color:#633806}
-.opt-btn.sel.r1{border-color:#639922;background:#EAF3DE;color:#27500A}
-.opt-btn.sel.rf{border-color:#0F6E56;background:#E1F5EE;color:#085041}
-.modal-btns{display:flex;gap:8px;margin-top:1.25rem}
-.modal-btns button{flex:1;padding:10px;border-radius:10px;border:1px solid #d0d0cb;background:#f5f5f3;cursor:pointer;font-size:14px;color:#1a1a1a;font-weight:500}
-.btn-guardar{background:#1D9E75!important;color:#fff!important;border-color:#0F6E56!important}
-.pin-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;z-index:200}
-.pin-overlay.visible{display:flex}
-.pin-modal{background:#fff;border-radius:14px;padding:1.5rem;width:280px;max-width:90vw}
-.pin-modal h3{font-size:15px;font-weight:600;margin-bottom:1rem;color:#1a1a1a}
-.pin-input{width:100%;padding:10px;border-radius:10px;border:1.5px solid #d0d0cb;font-size:20px;letter-spacing:6px;text-align:center;color:#1a1a1a;margin-bottom:6px}
-.pin-input:focus{outline:none;border-color:#378ADD}
-.pin-err{font-size:12px;color:#A32D2D;margin-bottom:8px;display:none;text-align:center}
-.admin-badge{font-size:11px;background:#EAF3DE;color:#27500A;border:1px solid #639922;border-radius:99px;padding:2px 8px;display:none}
-.admin-badge.visible{display:inline-block}
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:13px;padding:8px 18px;border-radius:99px;opacity:0;transition:opacity 0.3s;z-index:300;pointer-events:none;white-space:nowrap}
+.lotes-grid{display:flex;flex-wrap:wrap;gap:4px}
+.c{width:34px;height:30px;border-radius:4px;border:1px solid #ccc;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:9px;font-weight:600;color:#888;background:#f8f8f5;user-select:none;transition:transform .1s}
+.c:hover{transform:scale(1.15);z-index:2;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.c.sg{background:#90C8FF;border-color:#1a5fa8;color:#003580}
+.c.r0{background:#FFB84D;border-color:#b07000;color:#5a3000}
+.c.r1{background:#66CC66;border-color:#2a7000;color:#1a4000}
+.c.rf{background:#0F8C55;border-color:#0a5035;color:#fff}
+.c.oculta{opacity:.08;pointer-events:none}
+.mo{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:100}
+.mo.v{display:flex}
+@media(min-width:480px){.mo{align-items:center}}
+.md{background:#fff;border-radius:16px 16px 0 0;padding:1.25rem 1.25rem 2rem;width:100%;max-width:380px}
+@media(min-width:480px){.md{border-radius:12px;padding:1.25rem}}
+.md h3{font-size:14px;font-weight:600;margin-bottom:2px}
+.mds{font-size:11px;color:#888;margin-bottom:1rem}
+.hs{display:flex;flex-direction:column;gap:6px}
+.hr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1.5px solid #e0e0db;background:#f9f9f7;cursor:pointer}
+.hr.al.sg-h{border-color:#1a5fa8;background:#E6F1FB}
+.hr.al.r0-h{border-color:#b07000;background:#FAEEDA}
+.hr.al.r1-h{border-color:#2a7000;background:#EAF3DE}
+.hr.al.rf-h{border-color:#0a5035;background:#E1F5EE}
+.hc{width:20px;height:20px;border-radius:50%;border:1.5px solid #ccc;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.hc.m.sg-c{background:#1a5fa8;border-color:#1a5fa8;color:#fff}
+.hc.m.r0-c{background:#b07000;border-color:#b07000;color:#fff}
+.hc.m.r1-c{background:#2a7000;border-color:#2a7000;color:#fff}
+.hc.m.rf-c{background:#0F8C55;border-color:#0a5035;color:#fff}
+.hl{font-size:13px;font-weight:500;flex:1}
+.mbb{display:flex;gap:8px;margin-top:1rem}
+.mbb button{flex:1;padding:9px;border-radius:8px;border:1px solid #ccc;background:#f5f5f3;cursor:pointer;font-size:13px;font-weight:500}
+.bgs{background:#1D9E75!important;color:#fff!important;border-color:#0F6E56!important}
+.po{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:200}
+.po.v{display:flex}
+.pm{background:#fff;border-radius:12px;padding:1.25rem;width:250px}
+.pm h3{font-size:13px;font-weight:600;margin-bottom:.75rem}
+.pi{width:100%;padding:9px;border-radius:8px;border:1.5px solid #ccc;font-size:20px;letter-spacing:6px;text-align:center;margin-bottom:5px}
+.pi:focus{outline:none;border-color:#378ADD}
+.pe{font-size:11px;color:#A32D2D;text-align:center;margin-bottom:6px;display:none}
+.abadge{font-size:10px;background:#EAF3DE;color:#27500A;border:1px solid #639922;border-radius:99px;padding:2px 7px;display:none}
+.abadge.v{display:inline-block}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:12px;padding:6px 14px;border-radius:99px;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 </style>
 </head>
 <body>
-
 <div class="header">
-  <div>
-    <div class="titulo">Control de Rs — Enrique Maturana</div>
-    <div class="subtitulo" id="fecha-hoy"></div>
-  </div>
-  <div style="display:flex;gap:6px;align-items:center">
-    <span class="admin-badge" id="admin-badge">✓ Admin</span>
-    <button class="btn-header" onclick="abrirPinOverlay()">
-      <i class="ti ti-lock" style="font-size:14px"></i> Admin
-    </button>
-    <button class="btn-header" onclick="exportarResumen()">
-      <i class="ti ti-download" style="font-size:14px"></i>
-    </button>
+  <div><div class="titulo">Control de Rs - Enrique Maturana</div><div class="subtitulo" id="fh"></div></div>
+  <div style="display:flex;gap:5px;align-items:center">
+    <span class="abadge" id="ab">Admin</span>
+    <button class="bh" onclick="openPin()">Admin</button>
+    <button class="bh" onclick="exportar()">Exportar</button>
   </div>
 </div>
-
-<div class="resumen" id="resumen"></div>
-<div class="barra-prog"><div class="barra-fill" id="barra"></div></div>
-<div class="pct-label" id="pct-label"></div>
-
+<div class="resumen" id="res"></div>
+<div class="bp"><div class="bpf" id="bpf"></div></div>
+<div class="ptxt" id="ptxt"></div>
 <div class="filtros">
-  <span>Filtrar:</span>
-  <button class="btn-filtro activo" id="f-todos" onclick="filtrar('todos')">Todos</button>
-  <button class="btn-filtro" id="f-sg" onclick="filtrar('sg')">Sello gris</button>
-  <button class="btn-filtro" id="f-r0" onclick="filtrar('r0')">R0</button>
-  <button class="btn-filtro" id="f-r1" onclick="filtrar('r1')">R1</button>
-  <button class="btn-filtro" id="f-rf" onclick="filtrar('rf')">RF ✓</button>
-  <button class="btn-filtro" id="f-nd" onclick="filtrar('nd')">Sin estado</button>
+  <span>Ver:</span>
+  <button class="fb on" id="f-todos" onclick="filtrar('todos')">Todos</button>
+  <button class="fb" id="f-sg" onclick="filtrar('sg')">&ge; Sello gris</button>
+  <button class="fb" id="f-r0" onclick="filtrar('r0')">&ge; R0</button>
+  <button class="fb" id="f-r1" onclick="filtrar('r1')">&ge; R1</button>
+  <button class="fb" id="f-rf" onclick="filtrar('rf')">RF</button>
+  <button class="fb" id="f-nd" onclick="filtrar('nd')">Sin inicio</button>
 </div>
-
-<div class="simbolo">
-  <div class="sim-item"><div class="sim-caja" style="background:#fff;border-color:#ccc"></div>Sin estado</div>
-  <div class="sim-item"><div class="sim-caja" style="background:#E6F1FB;border-color:#378ADD"></div>Sello gris</div>
-  <div class="sim-item"><div class="sim-caja" style="background:#FAEEDA;border-color:#EF9F27"></div>R0</div>
-  <div class="sim-item"><div class="sim-caja" style="background:#EAF3DE;border-color:#639922"></div>R1</div>
-  <div class="sim-item"><div class="sim-caja" style="background:#1D9E75;border-color:#0F6E56"></div>RF ✓</div>
+<div class="ley">
+  <div class="li"><div class="lc" style="background:#f8f8f5;border-color:#ccc"></div>Sin inicio</div>
+  <div class="li"><div class="lc" style="background:#90C8FF;border-color:#1a5fa8"></div>Sello gris</div>
+  <div class="li"><div class="lc" style="background:#FFB84D;border-color:#b07000"></div>R0</div>
+  <div class="li"><div class="lc" style="background:#66CC66;border-color:#2a7000"></div>R1</div>
+  <div class="li"><div class="lc" style="background:#0F8C55;border-color:#0a5035"></div>RF</div>
 </div>
+<div class="svg-label">Plano de referencia</div>
+<div class="svg-wrap" id="svg-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="526" viewBox="0 0 1600 526">
+  <defs>
+    <style>
+      .road { fill: rgb(217,217,217); }
+      .green { fill: rgb(0,175,80); }
+      .lot { fill: #fff; stroke: #000; stroke-width: 1; }
+      .lot-sg { fill: #90C8FF; stroke: #1a5fa8; stroke-width: 1.5; }
+      .lot-r0 { fill: #FFB84D; stroke: #b07000; stroke-width: 1.5; }
+      .lot-r1 { fill: #66CC66; stroke: #2a7000; stroke-width: 1.5; }
+      .lot-rf { fill: #0F8C55; stroke: #0a5035; stroke-width: 1.5; }
+      .lotline { stroke: #000; stroke-width: 1; fill: none; }
+      .header { fill: rgb(46,117,182); stroke: #000; stroke-width: 1; }
+      .cap { fill: #fff; stroke: #000; stroke-width: 1; }
+      .num { font-family: Arial, Helvetica, sans-serif; font-size: 8px; fill: #000; text-anchor: middle; dominant-baseline: middle; }
+      .headertext { font-family: Arial, Helvetica, sans-serif; font-size: 8px; fill: #fff; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1600" height="526" fill="#fff"/>
 
+  <rect class="road" x="0" y="106" width="1600" height="29"/>
+  <rect class="road" x="1" y="429" width="1487" height="23"/>
+  <rect class="road" x="119" y="135" width="38" height="294"/>
+  <rect class="road" x="317" y="135" width="37" height="294"/>
+  <rect class="road" x="523" y="17" width="37" height="412"/>
+  <rect class="road" x="978" y="17" width="37" height="412"/>
+  <rect class="road" x="1451" y="135" width="37" height="294"/>
+  <rect x="0" y="0" width="523" height="106" fill="#fff"/>
+  <rect x="560" y="0" width="418" height="106" fill="#fff"/>
+  <rect x="1015" y="0" width="436" height="106" fill="#fff"/>
+  <rect x="0" y="135" width="119" height="294" fill="#fff"/>
+  <rect x="157" y="135" width="160" height="294" fill="#fff"/>
+  <rect x="354" y="135" width="169" height="294" fill="#fff"/>
+  <rect x="560" y="135" width="418" height="294" fill="#fff"/>
+  <rect x="1015" y="135" width="436" height="294" fill="#fff"/>
+  <rect x="1488" y="135" width="112" height="294" fill="#fff"/>
+  <rect x="40" y="453" width="990" height="73" fill="#fff"/>
+  <rect x="1015" y="453" width="436" height="73" fill="#fff"/>
+  <rect class="green" x="713" y="164" width="246" height="217"/>
+  <rect class="green" x="1034" y="164" width="398" height="217"/>
+  <g id="mz-f-header">
+    <rect class="header" x="194" y="1" width="97" height="17"/>
+    <text class="headertext" x="242.5" y="10.0">MZ.F</text>
+    <rect class="cap" x="291" y="1" width="26" height="17"/>
+  </g>
+  <g id="mz-g-header">
+    <rect class="header" x="695" y="1" width="111" height="17"/>
+    <text class="headertext" x="750.5" y="10.0">MZ.G</text>
+    <rect class="cap" x="806" y="1" width="24" height="17"/>
+  </g>
+  <g id="mz-j-header">
+    <rect class="header" x="1179" y="1" width="115" height="18"/>
+    <text class="headertext" x="1236.5" y="10.5">MZ.J</text>
+    <rect class="cap" x="1294" y="1" width="27" height="18"/>
+  </g>
+  <g id="mz-b-header">
+    <rect class="header" x="1" y="136" width="77" height="13"/>
+    <text class="headertext" x="39.5" y="143.0">MZ.B</text>
+    <rect class="cap" x="78" y="136" width="23" height="13"/>
+  </g>
+  <g id="mz-c-header">
+    <rect class="header" x="176" y="136" width="91" height="13"/>
+    <text class="headertext" x="221.5" y="143.0">MZ.C</text>
+    <rect class="cap" x="267" y="136" width="25" height="13"/>
+  </g>
+  <g id="mz-d-header">
+    <rect class="header" x="373" y="136" width="91" height="13"/>
+    <text class="headertext" x="418.5" y="143.0">MZ.D</text>
+    <rect class="cap" x="464" y="136" width="22" height="13"/>
+  </g>
+  <g id="mz-e-header">
+    <rect class="header" x="561" y="136" width="91" height="13"/>
+    <text class="headertext" x="606.5" y="143.0">MZ.E</text>
+    <rect class="cap" x="652" y="136" width="24" height="13"/>
+  </g>
+  <g id="mz-a-header">
+    <rect class="header" x="410" y="511" width="94" height="13"/>
+    <text class="headertext" x="457.0" y="518.0">MZ. A</text>
+    <rect class="cap" x="504" y="511" width="19" height="13"/>
+  </g>
+  <g id="mz-h-header">
+    <rect class="header" x="1157" y="511" width="100" height="13"/>
+    <text class="headertext" x="1207.0" y="518.0">MZ.H</text>
+    <rect class="cap" x="1257" y="511" width="19" height="13"/>
+  </g>
+  <g id="mz-k-header">
+    <rect class="header" x="1561" y="251" width="64" height="15"/>
+    <text class="headertext" x="1592" y="258.5">MZ.K</text>
+  </g>
+  <g id="mz-f" data-manzana="MZ.F">
+    <g id="mzf-vivienda-01" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="1">
+      <rect class="lot" x="0" y="18" width="20" height="29"/>
+      <text class="num" x="10.0" y="33.1">1</text>
+    </g>
+    <g id="mzf-vivienda-02" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="2">
+      <rect class="lot" x="20" y="18" width="21" height="29"/>
+      <text class="num" x="30.5" y="33.1">2</text>
+    </g>
+    <g id="mzf-vivienda-03" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="3">
+      <rect class="lot" x="58" y="18" width="22" height="29"/>
+      <text class="num" x="69.0" y="33.1">3</text>
+    </g>
+    <g id="mzf-vivienda-04" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="4">
+      <rect class="lot" x="80" y="18" width="22" height="29"/>
+      <text class="num" x="91.0" y="33.1">4</text>
+    </g>
+    <g id="mzf-vivienda-05" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="5">
+      <rect class="lot" x="119" y="18" width="19" height="29"/>
+      <text class="num" x="128.5" y="33.1">5</text>
+    </g>
+    <g id="mzf-vivienda-06" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="6">
+      <rect class="lot" x="138" y="18" width="19" height="29"/>
+      <text class="num" x="147.5" y="33.1">6</text>
+    </g>
+    <g id="mzf-vivienda-07" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="7">
+      <rect class="lot" x="175" y="18" width="19" height="29"/>
+      <text class="num" x="184.5" y="33.1">7</text>
+    </g>
+    <g id="mzf-vivienda-08" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="8">
+      <rect class="lot" x="194" y="18" width="19" height="29"/>
+      <text class="num" x="203.5" y="33.1">8</text>
+    </g>
+    <g id="mzf-vivienda-09" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="9">
+      <rect class="lot" x="232" y="18" width="19" height="29"/>
+      <text class="num" x="241.5" y="33.1">9</text>
+    </g>
+    <g id="mzf-vivienda-10" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="10">
+      <rect class="lot" x="251" y="18" width="19" height="29"/>
+      <text class="num" x="260.5" y="33.1">10</text>
+    </g>
+    <g id="mzf-vivienda-11" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="11">
+      <rect class="lot" x="292" y="18" width="22" height="29"/>
+      <text class="num" x="303.0" y="33.1">11</text>
+    </g>
+    <g id="mzf-vivienda-12" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="12">
+      <rect class="lot" x="314" y="18" width="22" height="29"/>
+      <text class="num" x="325.0" y="33.1">12</text>
+    </g>
+    <g id="mzf-vivienda-13" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="13">
+      <rect class="lot" x="354" y="18" width="19" height="29"/>
+      <text class="num" x="363.5" y="33.1">13</text>
+    </g>
+    <g id="mzf-vivienda-14" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="14">
+      <rect class="lot" x="373" y="18" width="19" height="29"/>
+      <text class="num" x="382.5" y="33.1">14</text>
+    </g>
+    <g id="mzf-vivienda-15" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="15">
+      <rect class="lot" x="409" y="18" width="19" height="29"/>
+      <text class="num" x="418.5" y="33.1">15</text>
+    </g>
+    <g id="mzf-vivienda-16" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="16">
+      <rect class="lot" x="428" y="18" width="19" height="29"/>
+      <text class="num" x="437.5" y="33.1">16</text>
+    </g>
+    <g id="mzf-vivienda-17" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="17">
+      <rect class="lot" x="465" y="18" width="20" height="29"/>
+      <text class="num" x="475.0" y="33.1">17</text>
+    </g>
+    <g id="mzf-vivienda-18" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="18">
+      <rect class="lot" x="485" y="18" width="20" height="29"/>
+      <text class="num" x="495.0" y="33.1">18</text>
+    </g>
+    <g id="mzf-vivienda-36" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="36">
+      <rect class="lot" x="0" y="60" width="41" height="16"/>
+      <text class="num" x="20.5" y="68.6">36</text>
+    </g>
+    <g id="mzf-vivienda-35" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="35">
+      <rect class="lot" x="0" y="76" width="41" height="17"/>
+      <text class="num" x="20.5" y="85.1">35</text>
+    </g>
+    <g id="mzf-vivienda-34" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="34">
+      <rect class="lot" x="58" y="60" width="22" height="33"/>
+      <text class="num" x="69.0" y="77.1">34</text>
+    </g>
+    <g id="mzf-vivienda-33" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="33">
+      <rect class="lot" x="80" y="60" width="22" height="33"/>
+      <text class="num" x="91.0" y="77.1">33</text>
+    </g>
+    <g id="mzf-vivienda-32" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="32">
+      <rect class="lot" x="119" y="60" width="19" height="33"/>
+      <text class="num" x="128.5" y="77.1">32</text>
+    </g>
+    <g id="mzf-vivienda-31" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="31">
+      <rect class="lot" x="138" y="60" width="19" height="33"/>
+      <text class="num" x="147.5" y="77.1">31</text>
+    </g>
+    <g id="mzf-vivienda-30" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="30">
+      <rect class="lot" x="175" y="60" width="19" height="33"/>
+      <text class="num" x="184.5" y="77.1">30</text>
+    </g>
+    <g id="mzf-vivienda-29" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="29">
+      <rect class="lot" x="194" y="60" width="19" height="33"/>
+      <text class="num" x="203.5" y="77.1">29</text>
+    </g>
+    <g id="mzf-vivienda-28" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="28">
+      <rect class="lot" x="232" y="60" width="20" height="33"/>
+      <text class="num" x="242.0" y="77.1">28</text>
+    </g>
+    <g id="mzf-vivienda-27" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="27">
+      <rect class="lot" x="252" y="60" width="21" height="33"/>
+      <text class="num" x="262.5" y="77.1">27</text>
+    </g>
+    <g id="mzf-vivienda-26" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="26">
+      <rect class="lot" x="292" y="60" width="22" height="33"/>
+      <text class="num" x="303.0" y="77.1">26</text>
+    </g>
+    <g id="mzf-vivienda-25" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="25">
+      <rect class="lot" x="314" y="60" width="22" height="33"/>
+      <text class="num" x="325.0" y="77.1">25</text>
+    </g>
+    <g id="mzf-vivienda-24" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="24">
+      <rect class="lot" x="354" y="60" width="19" height="33"/>
+      <text class="num" x="363.5" y="77.1">24</text>
+    </g>
+    <g id="mzf-vivienda-23" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="23">
+      <rect class="lot" x="373" y="60" width="19" height="33"/>
+      <text class="num" x="382.5" y="77.1">23</text>
+    </g>
+    <g id="mzf-vivienda-22" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="22">
+      <rect class="lot" x="409" y="60" width="19" height="33"/>
+      <text class="num" x="418.5" y="77.1">22</text>
+    </g>
+    <g id="mzf-vivienda-21" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="21">
+      <rect class="lot" x="428" y="60" width="19" height="33"/>
+      <text class="num" x="437.5" y="77.1">21</text>
+    </g>
+    <g id="mzf-vivienda-20" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="20">
+      <rect class="lot" x="465" y="60" width="20" height="33"/>
+      <text class="num" x="475.0" y="77.1">20</text>
+    </g>
+    <g id="mzf-vivienda-19" class="vivienda-ref" data-manzana="MZ.F" data-vivienda="19">
+      <rect class="lot" x="485" y="60" width="20" height="33"/>
+      <text class="num" x="495.0" y="77.1">19</text>
+    </g>
+  </g>
+  <g id="mz-g" data-manzana="MZ.G">
+    <g id="mzg-vivienda-01" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="1">
+      <rect class="lot" x="580" y="18" width="18" height="29"/>
+      <text class="num" x="589.0" y="33.1">1</text>
+    </g>
+    <g id="mzg-vivienda-02" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="2">
+      <rect class="lot" x="598" y="18" width="19" height="29"/>
+      <text class="num" x="607.5" y="33.1">2</text>
+    </g>
+    <g id="mzg-vivienda-03" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="3">
+      <rect class="lot" x="635" y="18" width="21" height="29"/>
+      <text class="num" x="645.5" y="33.1">3</text>
+    </g>
+    <g id="mzg-vivienda-04" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="4">
+      <rect class="lot" x="656" y="18" width="22" height="29"/>
+      <text class="num" x="667.0" y="33.1">4</text>
+    </g>
+    <g id="mzg-vivienda-05" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="5">
+      <rect class="lot" x="696" y="18" width="18" height="29"/>
+      <text class="num" x="705.0" y="33.1">5</text>
+    </g>
+    <g id="mzg-vivienda-06" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="6">
+      <rect class="lot" x="714" y="18" width="19" height="29"/>
+      <text class="num" x="723.5" y="33.1">6</text>
+    </g>
+    <g id="mzg-vivienda-07" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="7">
+      <rect class="lot" x="751" y="18" width="19" height="29"/>
+      <text class="num" x="760.5" y="33.1">7</text>
+    </g>
+    <g id="mzg-vivienda-08" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="8">
+      <rect class="lot" x="770" y="18" width="20" height="29"/>
+      <text class="num" x="780.0" y="33.1">8</text>
+    </g>
+    <g id="mzg-vivienda-09" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="9">
+      <rect class="lot" x="808" y="18" width="21" height="29"/>
+      <text class="num" x="818.5" y="33.1">9</text>
+    </g>
+    <g id="mzg-vivienda-10" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="10">
+      <rect class="lot" x="829" y="18" width="21" height="29"/>
+      <text class="num" x="839.5" y="33.1">10</text>
+    </g>
+    <g id="mzg-vivienda-11" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="11">
+      <rect class="lot" x="868" y="18" width="19" height="29"/>
+      <text class="num" x="877.5" y="33.1">11</text>
+    </g>
+    <g id="mzg-vivienda-12" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="12">
+      <rect class="lot" x="887" y="18" width="19" height="29"/>
+      <text class="num" x="896.5" y="33.1">12</text>
+    </g>
+    <g id="mzg-vivienda-13" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="13">
+      <rect class="lot" x="923" y="18" width="19" height="29"/>
+      <text class="num" x="932.5" y="33.1">13</text>
+    </g>
+    <g id="mzg-vivienda-14" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="14">
+      <rect class="lot" x="942" y="18" width="19" height="29"/>
+      <text class="num" x="951.5" y="33.1">14</text>
+    </g>
+    <g id="mzg-vivienda-28" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="28">
+      <rect class="lot" x="580" y="60" width="18" height="33"/>
+      <text class="num" x="589.0" y="77.1">28</text>
+    </g>
+    <g id="mzg-vivienda-27" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="27">
+      <rect class="lot" x="598" y="60" width="19" height="33"/>
+      <text class="num" x="607.5" y="77.1">27</text>
+    </g>
+    <g id="mzg-vivienda-26" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="26">
+      <rect class="lot" x="635" y="60" width="21" height="33"/>
+      <text class="num" x="645.5" y="77.1">26</text>
+    </g>
+    <g id="mzg-vivienda-25" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="25">
+      <rect class="lot" x="656" y="60" width="22" height="33"/>
+      <text class="num" x="667.0" y="77.1">25</text>
+    </g>
+    <g id="mzg-vivienda-24" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="24">
+      <rect class="lot" x="696" y="60" width="18" height="33"/>
+      <text class="num" x="705.0" y="77.1">24</text>
+    </g>
+    <g id="mzg-vivienda-23" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="23">
+      <rect class="lot" x="714" y="60" width="19" height="33"/>
+      <text class="num" x="723.5" y="77.1">23</text>
+    </g>
+    <g id="mzg-vivienda-22" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="22">
+      <rect class="lot" x="751" y="60" width="19" height="33"/>
+      <text class="num" x="760.5" y="77.1">22</text>
+    </g>
+    <g id="mzg-vivienda-21" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="21">
+      <rect class="lot" x="770" y="60" width="20" height="33"/>
+      <text class="num" x="780.0" y="77.1">21</text>
+    </g>
+    <g id="mzg-vivienda-20" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="20">
+      <rect class="lot" x="808" y="60" width="21" height="33"/>
+      <text class="num" x="818.5" y="77.1">20</text>
+    </g>
+    <g id="mzg-vivienda-19" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="19">
+      <rect class="lot" x="829" y="60" width="21" height="33"/>
+      <text class="num" x="839.5" y="77.1">19</text>
+    </g>
+    <g id="mzg-vivienda-18" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="18">
+      <rect class="lot" x="868" y="60" width="18" height="33"/>
+      <text class="num" x="877.0" y="77.1">18</text>
+    </g>
+    <g id="mzg-vivienda-17" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="17">
+      <rect class="lot" x="886" y="60" width="19" height="33"/>
+      <text class="num" x="895.5" y="77.1">17</text>
+    </g>
+    <g id="mzg-vivienda-16" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="16">
+      <rect class="lot" x="924" y="60" width="18" height="33"/>
+      <text class="num" x="933.0" y="77.1">16</text>
+    </g>
+    <g id="mzg-vivienda-15" class="vivienda-ref" data-manzana="MZ.G" data-vivienda="15">
+      <rect class="lot" x="942" y="60" width="19" height="33"/>
+      <text class="num" x="951.5" y="77.1">15</text>
+    </g>
+  </g>
+  <g id="mz-j" data-manzana="MZ.J">
+    <g id="mzj-vivienda-01" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="1">
+      <rect class="lot" x="1057" y="18" width="18" height="29"/>
+      <text class="num" x="1066.0" y="33.1">1</text>
+    </g>
+    <g id="mzj-vivienda-02" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="2">
+      <rect class="lot" x="1075" y="18" width="19" height="29"/>
+      <text class="num" x="1084.5" y="33.1">2</text>
+    </g>
+    <g id="mzj-vivienda-03" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="3">
+      <rect class="lot" x="1117" y="18" width="20" height="29"/>
+      <text class="num" x="1127.0" y="33.1">3</text>
+    </g>
+    <g id="mzj-vivienda-04" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="4">
+      <rect class="lot" x="1137" y="18" width="21" height="29"/>
+      <text class="num" x="1147.5" y="33.1">4</text>
+    </g>
+    <g id="mzj-vivienda-05" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="5">
+      <rect class="lot" x="1179" y="18" width="19" height="29"/>
+      <text class="num" x="1188.5" y="33.1">5</text>
+    </g>
+    <g id="mzj-vivienda-06" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="6">
+      <rect class="lot" x="1198" y="18" width="19" height="29"/>
+      <text class="num" x="1207.5" y="33.1">6</text>
+    </g>
+    <g id="mzj-vivienda-07" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="7">
+      <rect class="lot" x="1237" y="18" width="20" height="29"/>
+      <text class="num" x="1247.0" y="33.1">7</text>
+    </g>
+    <g id="mzj-vivienda-08" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="8">
+      <rect class="lot" x="1257" y="18" width="21" height="29"/>
+      <text class="num" x="1267.5" y="33.1">8</text>
+    </g>
+    <g id="mzj-vivienda-09" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="9">
+      <rect class="lot" x="1296" y="18" width="23" height="29"/>
+      <text class="num" x="1307.5" y="33.1">9</text>
+    </g>
+    <g id="mzj-vivienda-10" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="10">
+      <rect class="lot" x="1319" y="18" width="23" height="29"/>
+      <text class="num" x="1330.5" y="33.1">10</text>
+    </g>
+    <g id="mzj-vivienda-11" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="11">
+      <rect class="lot" x="1360" y="18" width="18" height="29"/>
+      <text class="num" x="1369.0" y="33.1">11</text>
+    </g>
+    <g id="mzj-vivienda-12" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="12">
+      <rect class="lot" x="1378" y="18" width="19" height="29"/>
+      <text class="num" x="1387.5" y="33.1">12</text>
+    </g>
+    <g id="mzj-vivienda-26" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="26">
+      <rect class="lot" x="1035" y="60" width="20" height="33"/>
+      <text class="num" x="1045.0" y="77.1">26</text>
+    </g>
+    <g id="mzj-vivienda-25" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="25">
+      <rect class="lot" x="1055" y="60" width="20" height="33"/>
+      <text class="num" x="1065.0" y="77.1">25</text>
+    </g>
+    <g id="mzj-vivienda-24" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="24">
+      <rect class="lot" x="1094" y="60" width="23" height="33"/>
+      <text class="num" x="1105.5" y="77.1">24</text>
+    </g>
+    <g id="mzj-vivienda-23" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="23">
+      <rect class="lot" x="1117" y="60" width="23" height="33"/>
+      <text class="num" x="1128.5" y="77.1">23</text>
+    </g>
+    <g id="mzj-vivienda-22" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="22">
+      <rect class="lot" x="1158" y="60" width="20" height="33"/>
+      <text class="num" x="1168.0" y="77.1">22</text>
+    </g>
+    <g id="mzj-vivienda-21" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="21">
+      <rect class="lot" x="1178" y="60" width="20" height="33"/>
+      <text class="num" x="1188.0" y="77.1">21</text>
+    </g>
+    <g id="mzj-vivienda-20" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="20">
+      <rect class="lot" x="1216" y="60" width="21" height="33"/>
+      <text class="num" x="1226.5" y="77.1">20</text>
+    </g>
+    <g id="mzj-vivienda-19" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="19">
+      <rect class="lot" x="1237" y="60" width="22" height="33"/>
+      <text class="num" x="1248.0" y="77.1">19</text>
+    </g>
+    <g id="mzj-vivienda-18" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="18">
+      <rect class="lot" x="1277" y="60" width="23" height="33"/>
+      <text class="num" x="1288.5" y="77.1">18</text>
+    </g>
+    <g id="mzj-vivienda-17" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="17">
+      <rect class="lot" x="1300" y="60" width="23" height="33"/>
+      <text class="num" x="1311.5" y="77.1">17</text>
+    </g>
+    <g id="mzj-vivienda-16" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="16">
+      <rect class="lot" x="1341" y="60" width="19" height="33"/>
+      <text class="num" x="1350.5" y="77.1">16</text>
+    </g>
+    <g id="mzj-vivienda-15" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="15">
+      <rect class="lot" x="1360" y="60" width="19" height="33"/>
+      <text class="num" x="1369.5" y="77.1">15</text>
+    </g>
+    <g id="mzj-vivienda-14" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="14">
+      <rect class="lot" x="1397" y="60" width="18" height="33"/>
+      <text class="num" x="1406.0" y="77.1">14</text>
+    </g>
+    <g id="mzj-vivienda-13" class="vivienda-ref" data-manzana="MZ.J" data-vivienda="13">
+      <rect class="lot" x="1415" y="60" width="19" height="33"/>
+      <text class="num" x="1424.5" y="77.1">13</text>
+    </g>
+  </g>
+  <g id="mz-b" data-manzana="MZ.B">
+    <g id="mzb-vivienda-12" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="12">
+      <rect class="lot" x="0" y="150" width="41" height="14"/>
+      <text class="num" x="20.5" y="157.6">12</text>
+    </g>
+    <g id="mzb-vivienda-11" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="11">
+      <rect class="lot" x="0" y="164" width="41" height="15"/>
+      <text class="num" x="20.5" y="172.1">11</text>
+    </g>
+    <g id="mzb-vivienda-13" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="13">
+      <rect class="lot" x="59" y="150" width="22" height="29"/>
+      <text class="num" x="70.0" y="165.1">13</text>
+    </g>
+    <g id="mzb-vivienda-14" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="14">
+      <rect class="lot" x="81" y="150" width="22" height="29"/>
+      <text class="num" x="92.0" y="165.1">14</text>
+    </g>
+    <g id="mzb-vivienda-10" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="10">
+      <rect class="lot" x="0" y="192" width="41" height="15"/>
+      <text class="num" x="20.5" y="200.1">10</text>
+    </g>
+    <g id="mzb-vivienda-09" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="9">
+      <rect class="lot" x="0" y="207" width="41" height="16"/>
+      <text class="num" x="20.5" y="215.6">9</text>
+    </g>
+    <g id="mzb-vivienda-08" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="8">
+      <rect class="lot" x="0" y="237" width="41" height="15"/>
+      <text class="num" x="20.5" y="245.1">8</text>
+    </g>
+    <g id="mzb-vivienda-07" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="7">
+      <rect class="lot" x="0" y="252" width="41" height="15"/>
+      <text class="num" x="20.5" y="260.1">7</text>
+    </g>
+    <g id="mzb-vivienda-06" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="6">
+      <rect class="lot" x="0" y="281" width="41" height="15"/>
+      <text class="num" x="20.5" y="289.1">6</text>
+    </g>
+    <g id="mzb-vivienda-05" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="5">
+      <rect class="lot" x="0" y="296" width="41" height="15"/>
+      <text class="num" x="20.5" y="304.1">5</text>
+    </g>
+    <g id="mzb-vivienda-04" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="4">
+      <rect class="lot" x="0" y="323" width="41" height="15"/>
+      <text class="num" x="20.5" y="331.1">4</text>
+    </g>
+    <g id="mzb-vivienda-03" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="3">
+      <rect class="lot" x="0" y="338" width="41" height="15"/>
+      <text class="num" x="20.5" y="346.1">3</text>
+    </g>
+    <g id="mzb-vivienda-02" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="2">
+      <rect class="lot" x="0" y="366" width="41" height="15"/>
+      <text class="num" x="20.5" y="374.1">2</text>
+    </g>
+    <g id="mzb-vivienda-01" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="1">
+      <rect class="lot" x="0" y="381" width="41" height="16"/>
+      <text class="num" x="20.5" y="389.6">1</text>
+    </g>
+    <g id="mzb-vivienda-15" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="15">
+      <rect class="lot" x="59" y="192" width="44" height="15"/>
+      <text class="num" x="81.0" y="200.1">15</text>
+    </g>
+    <g id="mzb-vivienda-16" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="16">
+      <rect class="lot" x="59" y="207" width="44" height="16"/>
+      <text class="num" x="81.0" y="215.6">16</text>
+    </g>
+    <g id="mzb-vivienda-17" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="17">
+      <rect class="lot" x="59" y="237" width="44" height="15"/>
+      <text class="num" x="81.0" y="245.1">17</text>
+    </g>
+    <g id="mzb-vivienda-18" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="18">
+      <rect class="lot" x="59" y="252" width="44" height="15"/>
+      <text class="num" x="81.0" y="260.1">18</text>
+    </g>
+    <g id="mzb-vivienda-19" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="19">
+      <rect class="lot" x="59" y="281" width="44" height="15"/>
+      <text class="num" x="81.0" y="289.1">19</text>
+    </g>
+    <g id="mzb-vivienda-20" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="20">
+      <rect class="lot" x="59" y="296" width="44" height="15"/>
+      <text class="num" x="81.0" y="304.1">20</text>
+    </g>
+    <g id="mzb-vivienda-21" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="21">
+      <rect class="lot" x="59" y="323" width="44" height="15"/>
+      <text class="num" x="81.0" y="331.1">21</text>
+    </g>
+    <g id="mzb-vivienda-22" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="22">
+      <rect class="lot" x="59" y="338" width="44" height="15"/>
+      <text class="num" x="81.0" y="346.1">22</text>
+    </g>
+    <g id="mzb-vivienda-24" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="24">
+      <rect class="lot" x="59" y="366" width="22" height="31"/>
+      <text class="num" x="70.0" y="382.1">24</text>
+    </g>
+    <g id="mzb-vivienda-23" class="vivienda-ref" data-manzana="MZ.B" data-vivienda="23">
+      <rect class="lot" x="81" y="366" width="22" height="31"/>
+      <text class="num" x="92.0" y="382.1">23</text>
+    </g>
+  </g>
+  <g id="mz-c" data-manzana="MZ.C">
+    <g id="mzc-vivienda-09" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="9">
+      <rect class="lot" x="176" y="150" width="19" height="29"/>
+      <text class="num" x="185.5" y="165.1">9</text>
+    </g>
+    <g id="mzc-vivienda-10" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="10">
+      <rect class="lot" x="195" y="150" width="19" height="29"/>
+      <text class="num" x="204.5" y="165.1">10</text>
+    </g>
+    <g id="mzc-vivienda-11" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="11">
+      <rect class="lot" x="252" y="150" width="21" height="29"/>
+      <text class="num" x="262.5" y="165.1">11</text>
+    </g>
+    <g id="mzc-vivienda-12" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="12">
+      <rect class="lot" x="273" y="150" width="21" height="29"/>
+      <text class="num" x="283.5" y="165.1">12</text>
+    </g>
+    <g id="mzc-vivienda-08" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="8">
+      <rect class="lot" x="176" y="192" width="38" height="15"/>
+      <text class="num" x="195.0" y="200.1">8</text>
+    </g>
+    <g id="mzc-vivienda-07" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="7">
+      <rect class="lot" x="176" y="207" width="38" height="16"/>
+      <text class="num" x="195.0" y="215.6">7</text>
+    </g>
+    <g id="mzc-vivienda-06" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="6">
+      <rect class="lot" x="176" y="237" width="38" height="15"/>
+      <text class="num" x="195.0" y="245.1">6</text>
+    </g>
+    <g id="mzc-vivienda-05" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="5">
+      <rect class="lot" x="176" y="252" width="38" height="15"/>
+      <text class="num" x="195.0" y="260.1">5</text>
+    </g>
+    <g id="mzc-vivienda-04" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="4">
+      <rect class="lot" x="176" y="281" width="38" height="14"/>
+      <text class="num" x="195.0" y="288.6">4</text>
+    </g>
+    <g id="mzc-vivienda-03" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="3">
+      <rect class="lot" x="176" y="295" width="38" height="15"/>
+      <text class="num" x="195.0" y="303.1">3</text>
+    </g>
+    <g id="mzc-vivienda-13" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="13">
+      <rect class="lot" x="252" y="192" width="42" height="15"/>
+      <text class="num" x="273.0" y="200.1">13</text>
+    </g>
+    <g id="mzc-vivienda-14" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="14">
+      <rect class="lot" x="252" y="207" width="42" height="16"/>
+      <text class="num" x="273.0" y="215.6">14</text>
+    </g>
+    <g id="mzc-vivienda-15" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="15">
+      <rect class="lot" x="252" y="237" width="42" height="15"/>
+      <text class="num" x="273.0" y="245.1">15</text>
+    </g>
+    <g id="mzc-vivienda-16" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="16">
+      <rect class="lot" x="252" y="252" width="42" height="15"/>
+      <text class="num" x="273.0" y="260.1">16</text>
+    </g>
+    <g id="mzc-vivienda-17" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="17">
+      <rect class="lot" x="252" y="281" width="42" height="14"/>
+      <text class="num" x="273.0" y="288.6">17</text>
+    </g>
+    <g id="mzc-vivienda-18" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="18">
+      <rect class="lot" x="252" y="295" width="42" height="15"/>
+      <text class="num" x="273.0" y="303.1">18</text>
+    </g>
+    <g id="mzc-vivienda-02" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="2">
+      <rect class="lot" x="176" y="323" width="19" height="30"/>
+      <text class="num" x="185.5" y="338.6">2</text>
+    </g>
+    <g id="mzc-vivienda-01" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="1">
+      <rect class="lot" x="195" y="323" width="19" height="30"/>
+      <text class="num" x="204.5" y="338.6">1</text>
+    </g>
+    <g id="mzc-vivienda-20" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="20">
+      <rect class="lot" x="252" y="323" width="21" height="30"/>
+      <text class="num" x="262.5" y="338.6">20</text>
+    </g>
+    <g id="mzc-vivienda-19" class="vivienda-ref" data-manzana="MZ.C" data-vivienda="19">
+      <rect class="lot" x="273" y="323" width="21" height="30"/>
+      <text class="num" x="283.5" y="338.6">19</text>
+    </g>
+  </g>
+  <g id="mz-d" data-manzana="MZ.D">
+    <g id="mzd-vivienda-09" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="9">
+      <rect class="lot" x="392" y="150" width="18" height="29"/>
+      <text class="num" x="401.0" y="165.1">9</text>
+    </g>
+    <g id="mzd-vivienda-10" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="10">
+      <rect class="lot" x="410" y="150" width="19" height="29"/>
+      <text class="num" x="419.5" y="165.1">10</text>
+    </g>
+    <g id="mzd-vivienda-11" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="11">
+      <rect class="lot" x="447" y="150" width="20" height="29"/>
+      <text class="num" x="457.0" y="165.1">11</text>
+    </g>
+    <g id="mzd-vivienda-12" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="12">
+      <rect class="lot" x="467" y="150" width="21" height="29"/>
+      <text class="num" x="477.5" y="165.1">12</text>
+    </g>
+    <g id="mzd-vivienda-08" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="8">
+      <rect class="lot" x="392" y="192" width="37" height="15"/>
+      <text class="num" x="410.5" y="200.1">8</text>
+    </g>
+    <g id="mzd-vivienda-07" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="7">
+      <rect class="lot" x="392" y="207" width="37" height="16"/>
+      <text class="num" x="410.5" y="215.6">7</text>
+    </g>
+    <g id="mzd-vivienda-06" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="6">
+      <rect class="lot" x="392" y="237" width="37" height="15"/>
+      <text class="num" x="410.5" y="245.1">6</text>
+    </g>
+    <g id="mzd-vivienda-05" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="5">
+      <rect class="lot" x="392" y="252" width="37" height="15"/>
+      <text class="num" x="410.5" y="260.1">5</text>
+    </g>
+    <g id="mzd-vivienda-04" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="4">
+      <rect class="lot" x="392" y="281" width="37" height="14"/>
+      <text class="num" x="410.5" y="288.6">4</text>
+    </g>
+    <g id="mzd-vivienda-03" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="3">
+      <rect class="lot" x="392" y="295" width="37" height="15"/>
+      <text class="num" x="410.5" y="303.1">3</text>
+    </g>
+    <g id="mzd-vivienda-13" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="13">
+      <rect class="lot" x="447" y="237" width="41" height="15"/>
+      <text class="num" x="467.5" y="245.1">13</text>
+    </g>
+    <g id="mzd-vivienda-14" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="14">
+      <rect class="lot" x="447" y="252" width="41" height="15"/>
+      <text class="num" x="467.5" y="260.1">14</text>
+    </g>
+    <g id="mzd-vivienda-15" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="15">
+      <rect class="lot" x="447" y="281" width="41" height="14"/>
+      <text class="num" x="467.5" y="288.6">15</text>
+    </g>
+    <g id="mzd-vivienda-16" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="16">
+      <rect class="lot" x="447" y="295" width="41" height="15"/>
+      <text class="num" x="467.5" y="303.1">16</text>
+    </g>
+    <g id="mzd-vivienda-02" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="2">
+      <rect class="lot" x="392" y="323" width="18" height="30"/>
+      <text class="num" x="401.0" y="338.6">2</text>
+    </g>
+    <g id="mzd-vivienda-01" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="1">
+      <rect class="lot" x="410" y="323" width="19" height="30"/>
+      <text class="num" x="419.5" y="338.6">1</text>
+    </g>
+    <g id="mzd-vivienda-18" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="18">
+      <rect class="lot" x="447" y="323" width="20" height="30"/>
+      <text class="num" x="457.0" y="338.6">18</text>
+    </g>
+    <g id="mzd-vivienda-17" class="vivienda-ref" data-manzana="MZ.D" data-vivienda="17">
+      <rect class="lot" x="467" y="323" width="21" height="30"/>
+      <text class="num" x="477.5" y="338.6">17</text>
+    </g>
+  </g>
+  <g id="mz-e" data-manzana="MZ.E">
+    <g id="mze-vivienda-05" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="5">
+      <rect class="lot" x="580" y="150" width="18" height="29"/>
+      <text class="num" x="589.0" y="165.1">5</text>
+    </g>
+    <g id="mze-vivienda-06" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="6">
+      <rect class="lot" x="598" y="150" width="19" height="29"/>
+      <text class="num" x="607.5" y="165.1">6</text>
+    </g>
+    <g id="mze-vivienda-07" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="7">
+      <rect class="lot" x="635" y="150" width="21" height="29"/>
+      <text class="num" x="645.5" y="165.1">7</text>
+    </g>
+    <g id="mze-vivienda-08" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="8">
+      <rect class="lot" x="656" y="150" width="22" height="29"/>
+      <text class="num" x="667.0" y="165.1">8</text>
+    </g>
+    <g id="mze-vivienda-04" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="4">
+      <rect class="lot" x="580" y="237" width="37" height="15"/>
+      <text class="num" x="598.5" y="245.1">4</text>
+    </g>
+    <g id="mze-vivienda-03" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="3">
+      <rect class="lot" x="580" y="252" width="37" height="15"/>
+      <text class="num" x="598.5" y="260.1">3</text>
+    </g>
+    <g id="mze-vivienda-02" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="2">
+      <rect class="lot" x="580" y="323" width="18" height="30"/>
+      <text class="num" x="589.0" y="338.6">2</text>
+    </g>
+    <g id="mze-vivienda-01" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="1">
+      <rect class="lot" x="598" y="323" width="19" height="30"/>
+      <text class="num" x="607.5" y="338.6">1</text>
+    </g>
+    <g id="mze-vivienda-10" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="10">
+      <rect class="lot" x="635" y="323" width="21" height="30"/>
+      <text class="num" x="645.5" y="338.6">10</text>
+    </g>
+    <g id="mze-vivienda-09" class="vivienda-ref" data-manzana="MZ.E" data-vivienda="9">
+      <rect class="lot" x="656" y="323" width="22" height="30"/>
+      <text class="num" x="667.0" y="338.6">9</text>
+    </g>
+  </g>
+  <g id="mz-k" data-manzana="MZ.K">
+    <g id="mzk-vivienda-07" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="7">
+      <rect class="lot" x="1508" y="150" width="18" height="29"/>
+      <text class="num" x="1517.0" y="165.1">7</text>
+    </g>
+    <g id="mzk-vivienda-06" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="6">
+      <rect class="lot" x="1526" y="150" width="19" height="29"/>
+      <text class="num" x="1535.5" y="165.1">6</text>
+    </g>
+    <g id="mzk-vivienda-05" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="5">
+      <path class="lot" d="M1508,193 H1545 V223 H1508 Z"/>
+      <path class="lotline" d="M1508,207 H1526 M1526,193 V207"/>
+      <text class="num" x="1536.86" y="201.4">5</text>
+    </g>
+    <g id="mzk-vivienda-04" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="4">
+      <rect class="lot" x="1508" y="237" width="37" height="15"/>
+      <text class="num" x="1526.5" y="245.1">4</text>
+    </g>
+    <g id="mzk-vivienda-03" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="3">
+      <rect class="lot" x="1508" y="252" width="37" height="15"/>
+      <text class="num" x="1526.5" y="260.1">3</text>
+    </g>
+    <g id="mzk-vivienda-02" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="2">
+      <rect class="lot" x="1508" y="323" width="37" height="15"/>
+      <text class="num" x="1526.5" y="331.1">2</text>
+    </g>
+    <g id="mzk-vivienda-01" class="vivienda-ref" data-manzana="MZ.K" data-vivienda="1">
+      <rect class="lot" x="1508" y="338" width="37" height="15"/>
+      <text class="num" x="1526.5" y="346.1">1</text>
+    </g>
+  </g>
+  <g id="mz-a" data-manzana="MZ.A">
+    <g id="mza-vivienda-01" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="1">
+      <rect class="lot" x="59" y="467" width="22" height="29"/>
+      <text class="num" x="70.0" y="482.1">1</text>
+    </g>
+    <g id="mza-vivienda-02" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="2">
+      <rect class="lot" x="81" y="467" width="22" height="29"/>
+      <text class="num" x="92.0" y="482.1">2</text>
+    </g>
+    <g id="mza-vivienda-03" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="3">
+      <rect class="lot" x="121" y="467" width="18" height="29"/>
+      <text class="num" x="130.0" y="482.1">3</text>
+    </g>
+    <g id="mza-vivienda-04" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="4">
+      <rect class="lot" x="139" y="467" width="19" height="29"/>
+      <text class="num" x="148.5" y="482.1">4</text>
+    </g>
+    <g id="mza-vivienda-05" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="5">
+      <rect class="lot" x="176" y="467" width="19" height="29"/>
+      <text class="num" x="185.5" y="482.1">5</text>
+    </g>
+    <g id="mza-vivienda-06" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="6">
+      <rect class="lot" x="195" y="467" width="19" height="29"/>
+      <text class="num" x="204.5" y="482.1">6</text>
+    </g>
+    <g id="mza-vivienda-07" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="7">
+      <rect class="lot" x="233" y="467" width="18" height="29"/>
+      <text class="num" x="242.0" y="482.1">7</text>
+    </g>
+    <g id="mza-vivienda-08" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="8">
+      <rect class="lot" x="251" y="467" width="19" height="29"/>
+      <text class="num" x="260.5" y="482.1">8</text>
+    </g>
+    <g id="mza-vivienda-09" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="9">
+      <rect class="lot" x="293" y="467" width="22" height="29"/>
+      <text class="num" x="304.0" y="482.1">9</text>
+    </g>
+    <g id="mza-vivienda-10" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="10">
+      <rect class="lot" x="315" y="467" width="22" height="29"/>
+      <text class="num" x="326.0" y="482.1">10</text>
+    </g>
+    <g id="mza-vivienda-11" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="11">
+      <rect class="lot" x="355" y="467" width="18" height="29"/>
+      <text class="num" x="364.0" y="482.1">11</text>
+    </g>
+    <g id="mza-vivienda-12" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="12">
+      <rect class="lot" x="373" y="467" width="19" height="29"/>
+      <text class="num" x="382.5" y="482.1">12</text>
+    </g>
+    <g id="mza-vivienda-13" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="13">
+      <rect class="lot" x="410" y="467" width="19" height="29"/>
+      <text class="num" x="419.5" y="482.1">13</text>
+    </g>
+    <g id="mza-vivienda-14" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="14">
+      <rect class="lot" x="429" y="467" width="19" height="29"/>
+      <text class="num" x="438.5" y="482.1">14</text>
+    </g>
+    <g id="mza-vivienda-15" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="15">
+      <rect class="lot" x="466" y="467" width="20" height="29"/>
+      <text class="num" x="476.0" y="482.1">15</text>
+    </g>
+    <g id="mza-vivienda-16" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="16">
+      <rect class="lot" x="486" y="467" width="20" height="29"/>
+      <text class="num" x="496.0" y="482.1">16</text>
+    </g>
+    <g id="mza-vivienda-17" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="17">
+      <rect class="lot" x="524" y="467" width="19" height="29"/>
+      <text class="num" x="533.5" y="482.1">17</text>
+    </g>
+    <g id="mza-vivienda-18" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="18">
+      <rect class="lot" x="543" y="467" width="19" height="29"/>
+      <text class="num" x="552.5" y="482.1">18</text>
+    </g>
+    <g id="mza-vivienda-19" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="19">
+      <rect class="lot" x="580" y="467" width="18" height="29"/>
+      <text class="num" x="589.0" y="482.1">19</text>
+    </g>
+    <g id="mza-vivienda-20" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="20">
+      <rect class="lot" x="598" y="467" width="19" height="29"/>
+      <text class="num" x="607.5" y="482.1">20</text>
+    </g>
+    <g id="mza-vivienda-21" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="21">
+      <rect class="lot" x="635" y="467" width="21" height="29"/>
+      <text class="num" x="645.5" y="482.1">21</text>
+    </g>
+    <g id="mza-vivienda-22" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="22">
+      <rect class="lot" x="656" y="467" width="22" height="29"/>
+      <text class="num" x="667.0" y="482.1">22</text>
+    </g>
+    <g id="mza-vivienda-23" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="23">
+      <rect class="lot" x="696" y="467" width="18" height="29"/>
+      <text class="num" x="705.0" y="482.1">23</text>
+    </g>
+    <g id="mza-vivienda-24" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="24">
+      <rect class="lot" x="714" y="467" width="19" height="29"/>
+      <text class="num" x="723.5" y="482.1">24</text>
+    </g>
+    <g id="mza-vivienda-25" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="25">
+      <rect class="lot" x="751" y="467" width="19" height="29"/>
+      <text class="num" x="760.5" y="482.1">25</text>
+    </g>
+    <g id="mza-vivienda-26" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="26">
+      <rect class="lot" x="770" y="467" width="20" height="29"/>
+      <text class="num" x="780.0" y="482.1">26</text>
+    </g>
+    <g id="mza-vivienda-27" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="27">
+      <rect class="lot" x="808" y="467" width="21" height="29"/>
+      <text class="num" x="818.5" y="482.1">27</text>
+    </g>
+    <g id="mza-vivienda-28" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="28">
+      <rect class="lot" x="829" y="467" width="21" height="29"/>
+      <text class="num" x="839.5" y="482.1">28</text>
+    </g>
+    <g id="mza-vivienda-29" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="29">
+      <rect class="lot" x="868" y="467" width="19" height="29"/>
+      <text class="num" x="877.5" y="482.1">29</text>
+    </g>
+    <g id="mza-vivienda-30" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="30">
+      <rect class="lot" x="887" y="467" width="19" height="29"/>
+      <text class="num" x="896.5" y="482.1">30</text>
+    </g>
+    <g id="mza-vivienda-31" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="31">
+      <rect class="lot" x="923" y="467" width="19" height="29"/>
+      <text class="num" x="932.5" y="482.1">31</text>
+    </g>
+    <g id="mza-vivienda-32" class="vivienda-ref" data-manzana="MZ.A" data-vivienda="32">
+      <rect class="lot" x="942" y="467" width="19" height="29"/>
+      <text class="num" x="951.5" y="482.1">32</text>
+    </g>
+  </g>
+  <g id="mz-h" data-manzana="MZ.H">
+    <g id="mzh-vivienda-01" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="1">
+      <rect class="lot" x="1034" y="467" width="21" height="29"/>
+      <text class="num" x="1044.5" y="482.1">1</text>
+    </g>
+    <g id="mzh-vivienda-02" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="2">
+      <rect class="lot" x="1055" y="467" width="21" height="29"/>
+      <text class="num" x="1065.5" y="482.1">2</text>
+    </g>
+    <g id="mzh-vivienda-03" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="3">
+      <rect class="lot" x="1094" y="467" width="23" height="29"/>
+      <text class="num" x="1105.5" y="482.1">3</text>
+    </g>
+    <g id="mzh-vivienda-04" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="4">
+      <rect class="lot" x="1117" y="467" width="23" height="29"/>
+      <text class="num" x="1128.5" y="482.1">4</text>
+    </g>
+    <g id="mzh-vivienda-05" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="5">
+      <rect class="lot" x="1158" y="467" width="20" height="29"/>
+      <text class="num" x="1168.0" y="482.1">5</text>
+    </g>
+    <g id="mzh-vivienda-06" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="6">
+      <rect class="lot" x="1178" y="467" width="20" height="29"/>
+      <text class="num" x="1188.0" y="482.1">6</text>
+    </g>
+    <g id="mzh-vivienda-07" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="7">
+      <rect class="lot" x="1216" y="467" width="21" height="29"/>
+      <text class="num" x="1226.5" y="482.1">7</text>
+    </g>
+    <g id="mzh-vivienda-08" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="8">
+      <rect class="lot" x="1237" y="467" width="22" height="29"/>
+      <text class="num" x="1248.0" y="482.1">8</text>
+    </g>
+    <g id="mzh-vivienda-09" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="9">
+      <rect class="lot" x="1277" y="467" width="23" height="29"/>
+      <text class="num" x="1288.5" y="482.1">9</text>
+    </g>
+    <g id="mzh-vivienda-10" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="10">
+      <rect class="lot" x="1300" y="467" width="23" height="29"/>
+      <text class="num" x="1311.5" y="482.1">10</text>
+    </g>
+    <g id="mzh-vivienda-11" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="11">
+      <rect class="lot" x="1341" y="467" width="19" height="29"/>
+      <text class="num" x="1350.5" y="482.1">11</text>
+    </g>
+    <g id="mzh-vivienda-12" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="12">
+      <rect class="lot" x="1360" y="467" width="19" height="29"/>
+      <text class="num" x="1369.5" y="482.1">12</text>
+    </g>
+    <g id="mzh-vivienda-13" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="13">
+      <rect class="lot" x="1397" y="467" width="18" height="29"/>
+      <text class="num" x="1406.0" y="482.1">13</text>
+    </g>
+    <g id="mzh-vivienda-14" class="vivienda-ref" data-manzana="MZ.H" data-vivienda="14">
+      <rect class="lot" x="1415" y="467" width="19" height="29"/>
+      <text class="num" x="1424.5" y="482.1">14</text>
+    </g>
+  </g>
+</svg>
+</div>
 <div class="manzanas" id="manzanas"></div>
-
-<!-- Modal estado vivienda -->
-<div class="modal-overlay" id="modal-overlay" onclick="cerrarModalSiFuera(event)">
-  <div class="modal">
-    <h3 id="modal-titulo">Vivienda</h3>
-    <div class="sub" id="modal-sub"></div>
-    <div class="opciones" id="modal-opciones"></div>
-    <div class="modal-btns">
-      <button onclick="cerrarModal()">Cancelar</button>
-      <button class="btn-guardar" onclick="guardarEstado()">Guardar</button>
-    </div>
+<div class="mo" id="mo" onclick="if(event.target===this)cm()">
+  <div class="md"><h3 id="mt"></h3><div class="mds">Marca los hitos alcanzados</div>
+    <div class="hs" id="mh"></div>
+    <div class="mbb"><button onclick="cm()">Cancelar</button><button class="bgs" onclick="gh()">Guardar</button></div>
   </div>
 </div>
-
-<!-- Modal PIN -->
-<div class="pin-overlay" id="pin-overlay" onclick="cerrarPinSiFuera(event)">
-  <div class="pin-modal">
-    <h3><i class="ti ti-lock" style="font-size:14px;margin-right:6px"></i>Acceso admin</h3>
-    <input type="password" class="pin-input" id="pin-input" placeholder="• • • •" maxlength="6" oninput="verificarPin()" />
-    <div class="pin-err" id="pin-err">PIN incorrecto</div>
-    <div class="modal-btns">
-      <button onclick="cerrarPinOverlay()">Cancelar</button>
-    </div>
+<div class="po" id="po" onclick="if(event.target===this)cp()">
+  <div class="pm"><h3>Acceso admin</h3>
+    <input type="password" class="pi" id="pi" placeholder="PIN" maxlength="6" oninput="vp()">
+    <div class="pe" id="pe">PIN incorrecto</div>
+    <div class="mbb"><button onclick="cp()">Cancelar</button></div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
-const PIN_CORRECTO = '0525';
-let adminMode = false;
-let filtroActivo = 'todos';
-let casaSeleccionada = null;
-let estadoSeleccionado = null;
-let pendienteCasa = null;
-
-const MANZANAS = {
-  'F': 36, 'B': 24, 'C': 20, 'D': 18,
-  'E': 10, 'G': 28, 'J': 26, 'K': 6,
-  'H': 14, 'A': 32
-};
-
-const ESTADOS = [
-  {val:'nd',  label:'Sin estado',  cls:'nd'},
-  {val:'sg',  label:'Sello gris',  cls:'sg'},
-  {val:'r0',  label:'R0',          cls:'r0'},
-  {val:'r1',  label:'R1',          cls:'r1'},
-  {val:'rf',  label:'RF ✓',        cls:'rf'},
+var PIN="0525",admin=false,fa="todos",ca=null,ht=[],pc=null;
+var ET=["sg","r0","r1","rf"];
+var EN={sg:1,r0:2,r1:3,rf:4};
+var EL={sg:"Sello gris",r0:"R0",r1:"R1",rf:"RF"};
+var MANZANAS=[
+  {id:"F",nombre:"Manzana F",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19]},
+  {id:"G",nombre:"Manzana G",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,28,27,26,25,24,23,22,21,20,19,18,17,16,15]},
+  {id:"J",nombre:"Manzana J",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,26,25,24,23,22,21,20,19,18,17,16,15,14,13]},
+  {id:"B",nombre:"Manzana B",lotes:[12,11,10,9,8,7,6,5,4,3,2,1,13,14,15,16,17,18,19,20,21,22,23,24]},
+  {id:"C",nombre:"Manzana C",lotes:[9,10,8,7,6,5,4,3,2,1,11,12,13,14,15,16,17,18,20,19]},
+  {id:"D",nombre:"Manzana D",lotes:[9,10,8,7,6,5,4,3,2,1,11,12,13,14,15,16,17,18]},
+  {id:"E",nombre:"Manzana E",lotes:[5,6,7,8,4,3,2,1,10,9]},
+  {id:"K",nombre:"Manzana K",lotes:[7,6,5,4,3,2,1]},
+  {id:"A",nombre:"Manzana A",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32]},
+  {id:"H",nombre:"Manzana H",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14]}
 ];
 
-function key(mz, lote){ return `em_mz${mz}_l${lote}`; }
-function getE(mz, lote){ return localStorage.getItem(key(mz,lote)) || 'nd'; }
-function setE(mz, lote, e){ if(e==='nd') localStorage.removeItem(key(mz,lote)); else localStorage.setItem(key(mz,lote),e); }
-
-function contarMz(mz){
-  let sg=0,r0=0,r1=0,rf=0,nd=0;
-  for(let l=1;l<=MANZANAS[mz];l++){
-    const e=getE(mz,l);
-    if(e==='sg')sg++; else if(e==='r0')r0++; else if(e==='r1')r1++; else if(e==='rf')rf++; else nd++;
-  }
-  return {sg,r0,r1,rf,nd,total:MANZANAS[mz]};
+function gH(mz,l){var v=localStorage.getItem("rs_"+mz+"_"+l);return v?JSON.parse(v):[];}
+function sH(mz,l,a){localStorage.setItem("rs_"+mz+"_"+l,JSON.stringify(a));}
+function uH(h){var mx=0,u=null;for(var i=0;i<h.length;i++)if(EN[h[i]]>mx){mx=EN[h[i]];u=h[i];}return u;}
+function dv(h,f){
+  if(f==="todos")return true;
+  if(f==="nd")return h.length===0;
+  if(h.indexOf(f)>=0)return true;
+  for(var i=ET.indexOf(f)+1;i<ET.length;i++)if(h.indexOf(ET[i])>=0)return true;
+  return false;
 }
 
-function renderResumen(){
-  let tot=0,sg=0,r0=0,r1=0,rf=0;
-  for(const mz in MANZANAS){
-    const c=contarMz(mz);
-    tot+=c.total; sg+=c.sg; r0+=c.r0; r1+=c.r1; rf+=c.rf;
+function updateSVG(){
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i];
+    for(var j=0;j<mz.lotes.length;j++){
+      var l=mz.lotes[j];
+      var h=gH(mz.id,l),u=uH(h);
+      var num=String(l).padStart(2,"0");
+      var svgEl=document.getElementById("mz"+mz.id.toLowerCase()+"-vivienda-"+num);
+      if(!svgEl)svgEl=document.getElementById("mz"+mz.id.toLowerCase()+"-vivienda-0"+l);
+      if(!svgEl)svgEl=document.getElementById("mz"+mz.id.toLowerCase()+"-vivienda-"+l);
+      if(svgEl){
+        var rect=svgEl.querySelector("rect");
+        if(rect)rect.className.baseVal=u?"lot lot-"+u:"lot";
+      }
+    }
   }
-  const nd=tot-sg-r0-r1-rf;
-  const pct=tot?Math.round((rf/tot)*100):0;
-  document.getElementById('resumen').innerHTML=`
-    <div class="card-stat"><div class="num">${tot}</div><div class="lbl">Total</div></div>
-    <div class="card-stat"><div class="num" style="color:#185FA5">${sg}</div><div class="lbl">Sello gris</div></div>
-    <div class="card-stat"><div class="num" style="color:#BA7517">${r0}</div><div class="lbl">R0</div></div>
-    <div class="card-stat"><div class="num" style="color:#3B6D11">${r1}</div><div class="lbl">R1</div></div>
-    <div class="card-stat"><div class="num" style="color:#1D9E75">${rf}</div><div class="lbl">RF ✓</div></div>
-    <div class="card-stat"><div class="num" style="color:#888">${nd}</div><div class="lbl">Sin estado</div></div>
-  `;
-  document.getElementById('barra').style.width=pct+'%';
-  document.getElementById('pct-label').textContent=`Avance a RF: ${pct}% (${rf} de ${tot} viviendas)`;
 }
 
 function renderManzanas(){
-  const cont=document.getElementById('manzanas');
-  cont.innerHTML='';
-  for(const mz in MANZANAS){
-    const c=contarMz(mz);
-    const bloque=document.createElement('div');
-    bloque.className='mz-bloque';
-    bloque.innerHTML=`
-      <div class="mz-header">
-        <div class="mz-titulo">Manzana ${mz} <span style="font-weight:400;color:#aaa">(${c.total} lotes)</span></div>
-        <div class="mz-stats">SG:${c.sg} R0:${c.r0} R1:${c.r1} <span style="color:#1D9E75;font-weight:600">RF:${c.rf}</span></div>
-      </div>
-      <div class="grid-casas" id="grid-${mz}"></div>
-    `;
-    cont.appendChild(bloque);
-    const grid=document.getElementById('grid-'+mz);
-    for(let l=1;l<=MANZANAS[mz];l++){
-      const e=getE(mz,l);
-      const div=document.createElement('div');
-      div.className='casa'+(e!=='nd'?' '+e:'');
-      if(filtroActivo!=='todos'&&e!==filtroActivo) div.classList.add('oculta');
-      div.dataset.mz=mz; div.dataset.lote=l;
-      div.innerHTML=`<span class="mz-label">MZ.${mz}</span><span class="lote-label">${l}</span>`;
-      div.addEventListener('click',()=>clickCasa(mz,l));
-      grid.appendChild(div);
+  var cont=document.getElementById("manzanas");
+  cont.innerHTML="";
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i];
+    var sg=0,r0=0,r1=0,rf=0;
+    for(var j=0;j<mz.lotes.length;j++){var u=uH(gH(mz.id,mz.lotes[j]));if(u==="sg")sg++;else if(u==="r0")r0++;else if(u==="r1")r1++;else if(u==="rf")rf++;}
+    var tot=mz.lotes.length,acRF=rf;
+    var blq=document.createElement("div");blq.className="mz-bloque";
+    blq.innerHTML="<div class='mz-header'><div class='mz-nombre'>"+mz.nombre+" <span style='font-weight:400;color:#aaa'>("+tot+" lotes)</span></div>"+
+      "<div class='mz-stats'>SG:"+(sg+r0+r1+rf)+" R0:"+(r0+r1+rf)+" R1:"+(r1+rf)+" <span style='color:#1D9E75;font-weight:600'>RF:"+rf+"</span></div></div>"+
+      "<div class='lotes-grid' id='grid-"+mz.id+"'></div>";
+    cont.appendChild(blq);
+    var grid=document.getElementById("grid-"+mz.id);
+    for(var j=0;j<mz.lotes.length;j++){
+      var l=mz.lotes[j],h=gH(mz.id,l),u=uH(h);
+      var d=document.createElement("div");
+      d.className="c"+(u?" "+u:"");
+      d.dataset.mz=mz.id;d.dataset.l=l;
+      d.textContent=l;
+      if(!dv(h,fa))d.classList.add("oculta");
+      d.addEventListener("click",(function(mzid,lot){return function(){click(mzid,lot);};})(mz.id,l));
+      grid.appendChild(d);
     }
   }
 }
 
-function clickCasa(mz,lote){
-  if(!adminMode){ pendienteCasa={mz,lote}; abrirPinOverlay(); return; }
-  abrirModal(mz,lote);
+function renderRes(){
+  var tot=0,sg=0,r0=0,r1=0,rf=0;
+  for(var i=0;i<MANZANAS.length;i++)for(var j=0;j<MANZANAS[i].lotes.length;j++){
+    tot++;var u=uH(gH(MANZANAS[i].id,MANZANAS[i].lotes[j]));
+    if(u==="sg")sg++;else if(u==="r0")r0++;else if(u==="r1")r1++;else if(u==="rf")rf++;
+  }
+  var acSG=sg+r0+r1+rf,acR0=r0+r1+rf,acR1=r1+rf,pct=Math.round(rf/tot*100);
+  document.getElementById("res").innerHTML=
+    "<div class='cs'><div class='num'>"+tot+"</div><div class='lbl'>Total</div></div>"+
+    "<div class='cs'><div class='num' style='color:#185FA5'>"+acSG+"</div><div class='lbl'>&ge; SG</div></div>"+
+    "<div class='cs'><div class='num' style='color:#BA7517'>"+acR0+"</div><div class='lbl'>&ge; R0</div></div>"+
+    "<div class='cs'><div class='num' style='color:#3B6D11'>"+acR1+"</div><div class='lbl'>&ge; R1</div></div>"+
+    "<div class='cs'><div class='num' style='color:#1D9E75'>"+rf+"</div><div class='lbl'>RF</div></div>";
+  document.getElementById("bpf").style.width=pct+"%";
+  document.getElementById("ptxt").textContent="Avance a RF: "+pct+"% ("+rf+" de "+tot+")";
 }
-
-function abrirModal(mz,lote){
-  casaSeleccionada={mz,lote};
-  estadoSeleccionado=getE(mz,lote);
-  document.getElementById('modal-titulo').textContent=`Manzana ${mz} — Lote ${lote}`;
-  document.getElementById('modal-sub').textContent='Selecciona el estado de recepción';
-  const ops=document.getElementById('modal-opciones');
-  ops.innerHTML='';
-  ESTADOS.forEach(e=>{
-    const b=document.createElement('button');
-    b.className='opt-btn'+(estadoSeleccionado===e.val?' sel '+e.cls:'');
-    b.textContent=e.label;
-    b.onclick=()=>selEstado(e.val);
-    ops.appendChild(b);
-  });
-  document.getElementById('modal-overlay').classList.add('visible');
-}
-
-function selEstado(v){
-  estadoSeleccionado=v;
-  document.querySelectorAll('#modal-opciones .opt-btn').forEach((b,i)=>{
-    b.className='opt-btn'+(ESTADOS[i].val===v?' sel '+ESTADOS[i].cls:'');
-  });
-}
-
-function guardarEstado(){
-  if(!casaSeleccionada) return;
-  setE(casaSeleccionada.mz,casaSeleccionada.lote,estadoSeleccionado);
-  cerrarModal();
-  renderResumen();
-  renderManzanas();
-  filtrar(filtroActivo);
-  showToast('Estado guardado');
-}
-
-function cerrarModal(){ document.getElementById('modal-overlay').classList.remove('visible'); casaSeleccionada=null; }
-function cerrarModalSiFuera(e){ if(e.target===document.getElementById('modal-overlay')) cerrarModal(); }
 
 function filtrar(f){
-  filtroActivo=f;
-  document.querySelectorAll('.btn-filtro').forEach(b=>b.classList.remove('activo'));
-  document.getElementById('f-'+f).classList.add('activo');
-  document.querySelectorAll('.casa').forEach(c=>{
-    const e=getE(c.dataset.mz,c.dataset.lote);
-    c.classList.toggle('oculta', f!=='todos'&&e!==f);
+  fa=f;
+  document.querySelectorAll(".fb").forEach(function(b){b.classList.remove("on");});
+  document.getElementById("f-"+f).classList.add("on");
+  document.querySelectorAll(".c").forEach(function(c){
+    c.classList.toggle("oculta",!dv(gH(c.dataset.mz,Number(c.dataset.l)),f));
   });
 }
 
-function abrirPinOverlay(){
-  document.getElementById('pin-input').value='';
-  document.getElementById('pin-err').style.display='none';
-  document.getElementById('pin-overlay').classList.add('visible');
-  setTimeout(()=>document.getElementById('pin-input').focus(),150);
-}
-function cerrarPinOverlay(){ document.getElementById('pin-overlay').classList.remove('visible'); pendienteCasa=null; }
-function cerrarPinSiFuera(e){ if(e.target===document.getElementById('pin-overlay')) cerrarPinOverlay(); }
+function click(mz,l){if(!admin){pc={mz:mz,l:l};openPin();return;}openModal(mz,l);}
 
-function verificarPin(){
-  const v=document.getElementById('pin-input').value;
+function openModal(mz,l){
+  ca={mz:mz,l:l};ht=gH(mz,l).slice();
+  document.getElementById("mt").textContent="Manzana "+mz+" - Lote "+l;
+  rHitos();document.getElementById("mo").classList.add("v");
+}
+
+function rHitos(){
+  var c=document.getElementById("mh");c.innerHTML="";
+  for(var i=0;i<ET.length;i++){
+    var e=ET[i],m=ht.indexOf(e)>=0;
+    var r=document.createElement("div");
+    r.className="hr"+(m?" al "+e+"-h":"");
+    r.setAttribute("data-e",e);
+    r.onclick=function(){tog(this.getAttribute("data-e"));};
+    var chk=document.createElement("div");chk.className="hc"+(m?" m "+e+"-c":"");chk.textContent=m?"v":"";
+    var lb=document.createElement("div");lb.className="hl";lb.textContent=EL[e];
+    r.appendChild(chk);r.appendChild(lb);c.appendChild(r);
+  }
+}
+
+function tog(e){
+  if(ht.indexOf(e)>=0){ht=ht.filter(function(h){return EN[h]<EN[e];});}
+  else{var i=ET.indexOf(e);for(var j=0;j<=i;j++)if(ht.indexOf(ET[j])<0)ht.push(ET[j]);}
+  rHitos();
+}
+
+function gh(){
+  if(!ca)return;
+  sH(ca.mz,ca.l,ht);
+  cm();
+  renderRes();
+  renderManzanas();
+  updateSVG();
+  filtrar(fa);
+  showT("Guardado");
+}
+function cm(){document.getElementById("mo").classList.remove("v");ca=null;}
+
+function openPin(){
+  document.getElementById("pi").value="";
+  document.getElementById("pe").style.display="none";
+  document.getElementById("po").classList.add("v");
+  setTimeout(function(){document.getElementById("pi").focus();},150);
+}
+function cp(){document.getElementById("po").classList.remove("v");pc=null;}
+function vp(){
+  var v=document.getElementById("pi").value;
   if(v.length>=4){
-    if(v===PIN_CORRECTO){
-      adminMode=true;
-      document.getElementById('admin-badge').classList.add('visible');
-      cerrarPinOverlay();
-      if(pendienteCasa){ abrirModal(pendienteCasa.mz,pendienteCasa.lote); pendienteCasa=null; }
-      showToast('Modo admin activado');
-    } else {
-      document.getElementById('pin-err').style.display='block';
-    }
-  } else {
-    document.getElementById('pin-err').style.display='none';
+    if(v===PIN){admin=true;document.getElementById("ab").classList.add("v");cp();if(pc){openModal(pc.mz,pc.l);pc=null;}showT("Admin activado");}
+    else document.getElementById("pe").style.display="block";
+  } else document.getElementById("pe").style.display="none";
+}
+
+function exportar(){
+  var hoy=new Date().toLocaleDateString("es-CL");
+  var txt="CONTROL DE RS - ENRIQUE MATURANA\n"+hoy+"\n";
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i],sg=0,r0=0,r1=0,rf=0;
+    for(var j=0;j<mz.lotes.length;j++){var u=uH(gH(mz.id,mz.lotes[j]));if(u==="sg")sg++;else if(u==="r0")r0++;else if(u==="r1")r1++;else if(u==="rf")rf++;}
+    txt+=mz.nombre+" | Total:"+mz.lotes.length+" | SG:"+(sg+r0+r1+rf)+" R0:"+(r0+r1+rf)+" R1:"+(r1+rf)+" RF:"+rf+"\n";
   }
+  var a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([txt],{type:"text/plain;charset=utf-8"}));
+  a.download="control_rs_"+new Date().toISOString().slice(0,10)+".txt";
+  a.click();showT("Exportado");
 }
 
-function exportarResumen(){
-  const hoy=new Date().toLocaleDateString('es-CL');
-  let txt=`CONTROL DE RS — ENRIQUE MATURANA\n${hoy}\n${'='.repeat(40)}\n\n`;
-  let totG=0,sfG=0,r0G=0,r1G=0,rfG=0;
-  for(const mz in MANZANAS){
-    const c=contarMz(mz);
-    totG+=c.total; sfG+=c.sg; r0G+=c.r0; r1G+=c.r1; rfG+=c.rf;
-    const pct=Math.round((c.rf/c.total)*100);
-    txt+=`Manzana ${mz.padEnd(2)} | Total:${String(c.total).padStart(3)} | SG:${String(c.sg).padStart(3)} R0:${String(c.r0).padStart(3)} R1:${String(c.r1).padStart(3)} RF:${String(c.rf).padStart(3)} | ${pct}% RF\n`;
-  }
-  const pctG=Math.round((rfG/totG)*100);
-  txt+=`\n${'='.repeat(40)}\nTOTAL      | Total:${String(totG).padStart(3)} | SG:${String(sfG).padStart(3)} R0:${String(r0G).padStart(3)} R1:${String(r1G).padStart(3)} RF:${String(rfG).padStart(3)} | ${pctG}% RF\n`;
-  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`control_rs_maturana_${new Date().toISOString().slice(0,10)}.txt`;
-  a.click();
-  showToast('Resumen exportado');
-}
+function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},2000);}
 
-function showToast(msg){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2000);
-}
-
-const dias=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-const meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-const hoy=new Date();
-document.getElementById('fecha-hoy').textContent=`${dias[hoy.getDay()]} ${hoy.getDate()} de ${meses[hoy.getMonth()]} ${hoy.getFullYear()}`;
-
-renderResumen();
+var dias=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
+var meses=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+var hoy=new Date();
+document.getElementById("fh").textContent=dias[hoy.getDay()]+" "+hoy.getDate()+" de "+meses[hoy.getMonth()]+" "+hoy.getFullYear();
+renderRes();
 renderManzanas();
+updateSVG();
 </script>
 </body>
 </html>
