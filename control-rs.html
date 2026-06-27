@@ -8,9 +8,9 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
-.header{background:#fff;border-bottom:1px solid #ddd;padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:20}
-.titulo{font-size:14px;font-weight:600}
-.subtitulo{font-size:11px;color:#888}
+.header{background:#1A1846;border-bottom:none;padding:.6rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:20}
+.titulo{font-size:14px;font-weight:600;color:#fff}
+.subtitulo{font-size:11px;color:#90C8FF}
 .resumen{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:.6rem 1rem}
 .cs{background:#fff;border-radius:7px;border:1px solid #e0e0db;padding:.4rem .3rem;text-align:center}
 .cs .num{font-size:18px;font-weight:600}
@@ -22,7 +22,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
 .filtros span{font-size:11px;color:#888}
 .fb{font-size:10px;padding:3px 9px;border-radius:99px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#555}
 .fb.on{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
-.bh{font-size:11px;padding:4px 8px;border-radius:7px;border:1px solid #ccc;background:#fff;cursor:pointer;color:#444;display:flex;align-items:center;gap:3px}
+.bh{font-size:11px;padding:4px 8px;border-radius:7px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.12);cursor:pointer;color:#fff;display:flex;align-items:center;gap:3px;text-decoration:none}
 .ley{display:flex;flex-wrap:wrap;gap:7px;padding:0 1rem .75rem}
 .li{display:flex;align-items:center;gap:4px;font-size:10px;color:#555}
 .lc{width:12px;height:12px;border-radius:3px;border:1px solid}
@@ -87,6 +87,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
   <div><div class="titulo">Control de Rs - Enrique Maturana</div><div class="subtitulo" id="fh"></div></div>
   <div style="display:flex;gap:5px;align-items:center">
     <span class="abadge" id="ab">Admin</span>
+    <a href="index.html" class="bh">&#8592; Inicio</a>
     <button class="bh" onclick="openPin()">Admin</button>
     <button class="bh" onclick="exportar()">Exportar</button>
     <button class="bh" onclick="capturar()" id="btn-cap">Imagen</button>
