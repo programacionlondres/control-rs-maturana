@@ -76,6 +76,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:12px;padding:6px 14px;border-radius:99px;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none;white-space:nowrap}
 .toast.show{opacity:1}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="header">
@@ -84,6 +85,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
     <span class="abadge" id="ab">Admin</span>
     <button class="bh" onclick="openPin()">Admin</button>
     <button class="bh" onclick="exportar()">Exportar</button>
+    <button class="bh" onclick="capturar()" id="btn-cap">Imagen</button>
   </div>
 </div>
 <div class="resumen" id="res"></div>
@@ -1264,6 +1266,32 @@ function exportar(){
 
 function showT(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},2000);}
 
+function capturar(){
+  var btn=document.getElementById('btn-cap');
+  btn.textContent='Generando...';
+  btn.disabled=true;
+  var target=document.body;
+  html2canvas(target,{
+    scale:2,
+    useCORS:true,
+    backgroundColor:'#f0f0ec',
+    scrollY:0,
+    windowWidth:document.body.scrollWidth,
+    windowHeight:document.body.scrollHeight
+  }).then(function(canvas){
+    var a=document.createElement('a');
+    a.download='reporte_rs_maturana_'+new Date().toISOString().slice(0,10)+'.png';
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    btn.textContent='Imagen';
+    btn.disabled=false;
+    showT('Imagen descargada');
+  }).catch(function(){
+    btn.textContent='Imagen';
+    btn.disabled=false;
+    showT('Error al generar imagen');
+  });
+}
 var dias=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
 var meses=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 var hoy=new Date();
