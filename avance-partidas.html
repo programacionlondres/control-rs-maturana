@@ -1569,8 +1569,9 @@ function generarTablaDiaria(prog, hoy){
       var colReal=pr>0?(realDia>=pr?"#375623":"#A32D2D"):"#888";
       var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";
       var sepData="border-left:2px solid #b0b0cc;";
-      // Cumplimiento: min(real/pr, 1) solo si pr>0
-      var cumpl=pr>0?Math.min(realDia/pr,1):null;
+      // Cumplimiento: min(real/pr,1) si pr>0, sino real/totalLotes; solo si hay algo ejecutado
+      var denom=pr>0?pr:totalLotes;
+      var cumpl=(denom>0&&realDia>0)?Math.min(realDia/denom,1):null;
       if(cumpl!==null) cumplDia[d].push(cumpl);
       var cumplStr=cumpl!==null?"<br><span style='font-size:7px;font-weight:400;color:#555'>"+Math.round(cumpl*100)+"%</span>":"";
       row+="<td style='font-size:9px;text-align:center;color:#000080;"+bgCell+sepData+"'>"+pr+"</td>";
@@ -1580,7 +1581,8 @@ function generarTablaDiaria(prog, hoy){
     totPR[5]+=prSem;
     totREAL[5]+=realSem;
     var colSem=prSem>0?(realSem>=prSem?"#375623":"#A32D2D"):"#888";
-    var cumplSem=prSem>0?Math.min(realSem/prSem,1):null;
+    var denomSem=prSem>0?prSem:totalLotes;
+    var cumplSem=(denomSem>0&&realSem>0)?Math.min(realSem/denomSem,1):null;
     if(cumplSem!==null) cumplDia[5].push(cumplSem);
     var cumplSemStr=cumplSem!==null?"<br><span style='font-size:7px;font-weight:400;color:#555'>"+Math.round(cumplSem*100)+"%</span>":"";
     row+="<td style='font-size:9px;text-align:center;color:#000080;background:#FFF0D0;border-left:2px solid #b0b0cc'>"+prSem+"</td>";
