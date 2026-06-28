@@ -1528,6 +1528,8 @@ function generarTablaDiaria(prog, hoy){
 
   var totPR=[0,0,0,0,0,0],totREAL=[0,0,0,0,0,0];
   var totAcumEj=0,totAcumTot=0;
+  // cumplimiento por día: array de valores por partida (solo cuando PR>0)
+  var cumplDia=[[],[],[],[],[],[]]; // 5 días + semana
 
   for(var i=0;i<PARTIDAS.length;i++){
     var p=PARTIDAS[i];
@@ -1565,15 +1567,24 @@ function generarTablaDiaria(prog, hoy){
       var realDia=ejDia[d];
       totREAL[d]+=realDia;
       var colReal=pr>0?(realDia>=pr?"#375623":"#A32D2D"):"#888";
-      var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";var sepData="border-left:2px solid #b0b0cc;";row+="<td style='font-size:9px;text-align:center;color:#000080;"+bgCell+sepData+"'>"+pr+"</td>";
-      row+="<td style='font-size:9px;text-align:center;color:"+colReal+";font-weight:600;"+bgCell+"'>"+realDia+"</td>";
+      var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";
+      var sepData="border-left:2px solid #b0b0cc;";
+      // Cumplimiento: min(real/pr, 1) solo si pr>0
+      var cumpl=pr>0?Math.min(realDia/pr,1):null;
+      if(cumpl!==null) cumplDia[d].push(cumpl);
+      var cumplStr=cumpl!==null?"<br><span style='font-size:7px;font-weight:400;color:#555'>"+Math.round(cumpl*100)+"%</span>":"";
+      row+="<td style='font-size:9px;text-align:center;color:#000080;"+bgCell+sepData+"'>"+pr+"</td>";
+      row+="<td style='font-size:9px;text-align:center;color:"+colReal+";font-weight:600;"+bgCell+"'>"+realDia+cumplStr+"</td>";
     }
 
     totPR[5]+=prSem;
     totREAL[5]+=realSem;
     var colSem=prSem>0?(realSem>=prSem?"#375623":"#A32D2D"):"#888";
+    var cumplSem=prSem>0?Math.min(realSem/prSem,1):null;
+    if(cumplSem!==null) cumplDia[5].push(cumplSem);
+    var cumplSemStr=cumplSem!==null?"<br><span style='font-size:7px;font-weight:400;color:#555'>"+Math.round(cumplSem*100)+"%</span>":"";
     row+="<td style='font-size:9px;text-align:center;color:#000080;background:#FFF0D0;border-left:2px solid #b0b0cc'>"+prSem+"</td>";
-    row+="<td style='font-size:9px;text-align:center;font-weight:700;color:"+colSem+";background:#FFF0D0'>"+realSem+"</td>";
+    row+="<td style='font-size:9px;text-align:center;font-weight:700;color:"+colSem+";background:#FFF0D0'>"+realSem+cumplSemStr+"</td>";
 
     // Columna acumulado
     totAcumEj+=ejAcum; totAcumTot+=totalLotes;
@@ -1588,8 +1599,12 @@ function generarTablaDiaria(prog, hoy){
   // Fila totales
   var totRow="<tr style='background:#1A1846;color:#fff'><td colspan='2' style='font-size:9px;font-weight:700;padding:4px'>TOTAL</td>";
   for(var d=0;d<6;d++){
-var sepTot="border-left:2px solid rgba(255,255,255,0.25);";totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF;"+sepTot+"'>"+totPR[d]+"</td>";
-    totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+"</td>";
+    var sepTot="border-left:2px solid rgba(255,255,255,0.25);";
+    // Promedio de cumplimiento de ese día (solo partidas con PR>0)
+    var avgC=cumplDia[d].length>0?cumplDia[d].reduce(function(a,b){return a+b;},0)/cumplDia[d].length:null;
+    var avgCStr=avgC!==null?"<br><span style='font-size:7px;font-weight:400'>"+Math.round(avgC*100)+"%</span>":"";
+    totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF;"+sepTot+"'>"+totPR[d]+"</td>";
+    totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+avgCStr+"</td>";
   }
   var pctAcumTot=totAcumTot>0?Math.round(totAcumEj/totAcumTot*100):0;
   totRow+="<td style='font-size:9px;text-align:center;color:#aac4ff;border-left:2px solid rgba(255,255,255,0.25)'>"+totAcumTot+"</td>";
@@ -1732,22 +1747,57 @@ function cerrarReporte(){ document.getElementById("mr").classList.remove("v"); }
 
 function capturarReporte(){
   var el=document.getElementById("mrd");
-  var oldMax=el.style.maxHeight,oldOver=el.style.overflowY,oldW=el.style.width,oldMinW=el.style.minWidth,oldMaxW=el.style.maxWidth,oldBR=el.style.borderRadius;
+  // Guardar estilos originales
+  var oldMax=el.style.maxHeight;
+  var oldOver=el.style.overflowY;
+  var oldW=el.style.width;
+  var oldMinW=el.style.minWidth;
+  var oldMaxW=el.style.maxWidth;
+  var oldBR=el.style.borderRadius;
+  // Forzar ancho de escritorio para captura consistente en cualquier dispositivo
   var TARGET_W=720;
   var btnsEl=document.querySelector(".rep-btns");
   var oldBtnsDisplay=btnsEl?btnsEl.style.display:"";
   if(btnsEl) btnsEl.style.display="none";
-  el.style.maxHeight="none";el.style.overflowY="visible";
-  el.style.width=TARGET_W+"px";el.style.minWidth=TARGET_W+"px";el.style.maxWidth=TARGET_W+"px";el.style.borderRadius="12px";
-  function restore(){el.style.maxHeight=oldMax;el.style.overflowY=oldOver;el.style.width=oldW;el.style.minWidth=oldMinW;el.style.maxWidth=oldMaxW;el.style.borderRadius=oldBR;}
-  html2canvas(el,{scale:2,backgroundColor:"#ffffff",scrollX:0,scrollY:0,windowWidth:TARGET_W,windowHeight:el.scrollHeight,useCORS:true}).then(function(canvas){
-    restore();
+  el.style.maxHeight="none";
+  el.style.overflowY="visible";
+  el.style.width=TARGET_W+"px";
+  el.style.minWidth=TARGET_W+"px";
+  el.style.maxWidth=TARGET_W+"px";
+  el.style.borderRadius="12px";
+
+  html2canvas(el,{
+    scale:2,
+    backgroundColor:"#ffffff",
+    scrollX:0,
+    scrollY:0,
+    windowWidth:TARGET_W,
+    windowHeight:el.scrollHeight,
+    useCORS:true
+  }).then(function(canvas){
+    el.style.maxHeight=oldMax;
+    el.style.overflowY=oldOver;
+    el.style.width=oldW;
+    el.style.minWidth=oldMinW;
+    el.style.maxWidth=oldMaxW;
+    el.style.borderRadius=oldBR;
+    if(btnsEl) btnsEl.style.display=oldBtnsDisplay||"flex";
     var a=document.createElement("a");
-    var obraName=(document.title.split(' - ')[1]||'Obra').replace(/\s+/g,'_');a.download="Reporte_Diario_"+obraName+"_"+new Date().toISOString().slice(0,10)+".png";
+    var obraName=(document.title.split(' - ')[1]||'Obra').replace(/\s+/g,'_');
+    a.download="Reporte_Diario_"+obraName+"_"+new Date().toISOString().slice(0,10)+".png";
     a.href=canvas.toDataURL("image/png");
     a.click();
     showT("Imagen descargada");
-  }).catch(function(){restore();showT("Error al generar imagen");});
+  }).catch(function(){
+    el.style.maxHeight=oldMax;
+    el.style.overflowY=oldOver;
+    el.style.width=oldW;
+    el.style.minWidth=oldMinW;
+    el.style.maxWidth=oldMaxW;
+    el.style.borderRadius=oldBR;
+    if(btnsEl) btnsEl.style.display=oldBtnsDisplay||"flex";
+    showT("Error al generar imagen");
+  });
 }
 
 function capturar(){
