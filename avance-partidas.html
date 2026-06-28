@@ -1597,36 +1597,54 @@ function mostrarTabSemana(){
 
   document.getElementById("rep-fecha").textContent+=" (vs viernes "+fechaViernes+")";
 
+  // Fechas de la semana ACTUAL (para calcular fallback si Sheets no tiene datos)
+  var fechasSemActual=getFechasSemana(new Date().toISOString().slice(0,10));
+
   // Obtener snapshot del viernes pasado (un solo request)
   fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes)
     .then(function(r){return r.json();})
     .catch(function(){return {ok:false,datos:[]};})
     .then(function(data){
       var snapsPorPartida={};
-      if(data.ok && data.datos){
+      var hayDatosSheets=false;
+      if(data.ok && data.datos && data.datos.length>0){
+        hayDatosSheets=true;
         for(var i=0;i<data.datos.length;i++){
           snapsPorPartida[data.datos[i].partida]=data.datos[i].ejecutados||0;
         }
       }
-      generarTablaCierre(snapsPorPartida);
+      generarTablaCierre(snapsPorPartida, hayDatosSheets, fechasSemActual);
     });
 }
 
-function generarTablaCierre(snapsPorPartida){
+function generarTablaCierre(snapsPorPartida, hayDatosSheets, fechasSemActual){
   var tabla=document.getElementById("rep-tabla");
   var totAnt=0,totAct=0;
-  
+
   for(var i=0;i<PARTIDAS.length;i++){
     var p=PARTIDAS[i];
     var ejActual=0;
+    var ejSemana=0; // lotes únicos ejecutados esta semana
     for(var m=0;m<MANZANAS.length;m++){
       var mz=MANZANAS[m];
       for(var j=0;j<mz.lotes.length;j++){
         if(getEj(p.id,mz.id,mz.lotes[j])) ejActual++;
+        // ¿Tiene marca de algún día de esta semana?
+        if(fechasSemActual){
+          for(var fd=0;fd<fechasSemActual.length;fd++){
+            if(getEjFecha(p.id,mz.id,mz.lotes[j],fechasSemActual[fd])){ejSemana++;break;}
+          }
+        }
       }
     }
-    
-    var ejAnterior=snapsPorPartida[p.id]||0;
+
+    var ejAnterior;
+    if(hayDatosSheets){
+      ejAnterior=snapsPorPartida[p.id]||0;
+    } else {
+      // Sin datos en Sheets: estimar SEM ANT = acumulado − lo ejecutado esta semana
+      ejAnterior=Math.max(0, ejActual-ejSemana);
+    }
     var dif=ejActual-ejAnterior;
     var pct=Math.round(ejActual/TOTAL*100);
     totAnt+=ejAnterior; totAct+=ejActual;
