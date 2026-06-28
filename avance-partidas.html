@@ -1213,7 +1213,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 </div>
 <script>
 var PIN="0525",admin=false,ca=null,optSel="nd",pc=null;
-var SCRIPT_URL="https://script.google.com/macros/s/AKfycbwZr2aE9Mv7As6gPi0mzoEqM1UgvMKZreBYgWCYdr9yA5989gs88429I24RXvSLb2YcHg/exec";
+var SCRIPT_URL="https://script.google.com/macros/s/AKfycbwnZGgsPOb4wsaWNkoSJ834lx7bxTOSrPqekfShFwV1hScf0jyH8EVCQq1JlK6pRJwpzA/exec";
 var partidaActual="P01";
 var PARTIDAS = [
   {id:"P01",nombre:"2°PISO MURO PERI - EST ACERO GALVANIZADO"},
@@ -1270,9 +1270,28 @@ function cambiarFecha(f){
     bar.className = "fecha-reg-bar";
     aviso.textContent = f < hoyStr ? "⚠ Retroactivo" : "⚠ Futuro";
   }
-  renderKPIs();
-  updateSVG();
-  renderManzanas();
+  // Cargar marcas diarias de Sheets para esta fecha
+  fetch(SCRIPT_URL+"?accion=get_diario&fecha="+f)
+    .then(function(r){return r.json();})
+    .catch(function(){return null;})
+    .then(function(data){
+      if(data && data.ok){
+        // Limpiar claves diarias para esta fecha y repoblar desde Sheets
+        var toRemove=[];
+        for(var i=0;i<localStorage.length;i++){
+          var k=localStorage.key(i);
+          if(k && k.indexOf("aphoy_")===0 && k.endsWith("_"+f)) toRemove.push(k);
+        }
+        toRemove.forEach(function(k){localStorage.removeItem(k);});
+        for(var i=0;i<data.datos.length;i++){
+          var d=data.datos[i];
+          localStorage.setItem("aphoy_"+d.partida+"_"+d.mz+"_"+d.lote+"_"+f,"1");
+        }
+      }
+      renderKPIs();
+      updateSVG();
+      renderManzanas();
+    });
 }
 
 // Obtener ejecutados en la fecha seleccionada
@@ -1389,7 +1408,21 @@ function guardar(){
   renderKPIs();
   updateSVG();
   renderManzanas();
-  showT("Guardado");
+  showT("Guardando...");
+  // Sincronizar con Sheets en tiempo real
+  var ejAcum=nuevo?1:0;
+  var ejDiario=getEjHoy(partidaActual,ca.mz,ca.l)?1:0;
+  var url=SCRIPT_URL+"?accion=set_lote"+
+    "&partida="+encodeURIComponent(partidaActual)+
+    "&mz="+encodeURIComponent(ca.mz)+
+    "&lote="+encodeURIComponent(ca.l)+
+    "&fecha="+encodeURIComponent(fechaRegistro)+
+    "&ej="+ejDiario+
+    "&acum="+ejAcum;
+  fetch(url)
+    .then(function(r){return r.json();})
+    .then(function(r){showT(r.ok?"Guardado ✓":"Error al guardar");})
+    .catch(function(){showT("Sin conexión - guardado local");});
 }
 
 function cm(){ document.getElementById("mo").classList.remove("v"); ca=null; }
@@ -1852,7 +1885,37 @@ document.getElementById("fh").textContent=dias2[hoy2.getDay()]+" "+hoy2.getDate(
 
 var TOTAL=215;
 document.getElementById("fecha-reg-input").value = fechaRegistro;
-cambiarFecha(fechaRegistro);
+
+// ── Inicialización: cargar estado completo desde Sheets ──
+function inicializar(){
+  showT("Sincronizando datos...");
+  // Cargar estado acumulado (todos los lotes ejecutados)
+  fetch(SCRIPT_URL+"?accion=get_all_estado")
+    .then(function(r){return r.json();})
+    .catch(function(){return null;})
+    .then(function(data){
+      if(data && data.ok){
+        // Limpiar claves acumuladas y repoblar desde Sheets
+        var toRemove=[];
+        for(var i=0;i<localStorage.length;i++){
+          var k=localStorage.key(i);
+          if(k && k.indexOf("ap_")===0 && k.indexOf("aphoy_")===-1) toRemove.push(k);
+        }
+        toRemove.forEach(function(k){localStorage.removeItem(k);});
+        for(var i=0;i<data.datos.length;i++){
+          var d=data.datos[i];
+          localStorage.setItem("ap_"+d.partida+"_"+d.mz+"_"+d.lote,"1");
+        }
+        showT("Sincronizado ✓");
+      } else {
+        showT("Sin conexión - usando datos locales");
+      }
+      setTimeout(function(){showT("");},2000);
+      // cambiarFecha cargará los datos diarios y renderizará
+      cambiarFecha(fechaRegistro);
+    });
+}
+inicializar();
 </script>
 </body>
 </html>
