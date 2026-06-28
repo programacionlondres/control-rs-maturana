@@ -1735,33 +1735,19 @@ function cerrarReporte(){ document.getElementById("mr").classList.remove("v"); }
 
 function capturarReporte(){
   var el=document.getElementById("mrd");
-  // Expandir temporalmente para capturar todo
-  var oldMax=el.style.maxHeight;
-  var oldOver=el.style.overflowY;
-  el.style.maxHeight="none";
-  el.style.overflowY="visible";
-  
-  html2canvas(el,{
-    scale:2,
-    backgroundColor:"#ffffff",
-    scrollX:0,
-    scrollY:0,
-    windowWidth:el.scrollWidth,
-    windowHeight:el.scrollHeight,
-    useCORS:true
-  }).then(function(canvas){
-    el.style.maxHeight=oldMax;
-    el.style.overflowY=oldOver;
+  var oldMax=el.style.maxHeight,oldOver=el.style.overflowY,oldW=el.style.width,oldMinW=el.style.minWidth,oldMaxW=el.style.maxWidth,oldBR=el.style.borderRadius;
+  var TARGET_W=720;
+  el.style.maxHeight="none";el.style.overflowY="visible";
+  el.style.width=TARGET_W+"px";el.style.minWidth=TARGET_W+"px";el.style.maxWidth=TARGET_W+"px";el.style.borderRadius="12px";
+  function restore(){el.style.maxHeight=oldMax;el.style.overflowY=oldOver;el.style.width=oldW;el.style.minWidth=oldMinW;el.style.maxWidth=oldMaxW;el.style.borderRadius=oldBR;}
+  html2canvas(el,{scale:2,backgroundColor:"#ffffff",scrollX:0,scrollY:0,windowWidth:TARGET_W,windowHeight:el.scrollHeight,useCORS:true}).then(function(canvas){
+    restore();
     var a=document.createElement("a");
     a.download="reporte_partidas_"+new Date().toISOString().slice(0,10)+".png";
     a.href=canvas.toDataURL("image/png");
     a.click();
     showT("Imagen descargada");
-  }).catch(function(){
-    el.style.maxHeight=oldMax;
-    el.style.overflowY=oldOver;
-    showT("Error al generar imagen");
-  });
+  }).catch(function(){restore();showT("Error al generar imagen");});
 }
 
 function capturar(){
