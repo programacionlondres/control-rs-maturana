@@ -1896,25 +1896,49 @@ function forzarSync(){
   });
 }
 
-// ── Subir TODO el estado acumulado a Sheets (por partida) ──
+// ── Subir TODO el estado acumulado a Sheets usando set_lote (en lotes paralelos) ──
 function subirTodoASheets(onDone){
-  var idx=0;
-  function siguiente(){
-    if(idx>=PARTIDAS.length){if(onDone)onDone();return;}
-    var pid=PARTIDAS[idx].id; idx++;
-    var lotes=[];
+  // Armar lista de todos los lotes ejecutados
+  var queue=[];
+  for(var k=0;k<PARTIDAS.length;k++){
     for(var i=0;i<MANZANAS.length;i++){
       var mz=MANZANAS[i];
       for(var j=0;j<mz.lotes.length;j++){
-        if(getEj(pid,mz.id,mz.lotes[j])) lotes.push(mz.id+":"+mz.lotes[j]);
+        if(getEj(PARTIDAS[k].id,mz.id,mz.lotes[j])){
+          queue.push({pid:PARTIDAS[k].id,mz:mz.id,l:mz.lotes[j]});
+        }
       }
     }
-    // Siempre enviar aunque esté vacío (para limpiar partidas sin ejecución)
-    fetch(SCRIPT_URL+"?accion=set_estado_partida&partida="+encodeURIComponent(pid)+"&lotes="+encodeURIComponent(lotes.join(",")))
-      .catch(function(){})
-      .then(function(){siguiente();});
   }
-  siguiente();
+
+  if(queue.length===0){if(onDone)onDone();return;}
+
+  var total=queue.length;
+  var BATCH=8; // enviar 8 en paralelo para velocidad
+  var batchIdx=0;
+  var batches=[];
+  for(var i=0;i<queue.length;i+=BATCH) batches.push(queue.slice(i,i+BATCH));
+
+  function siguienteBatch(){
+    if(batchIdx>=batches.length){if(onDone)onDone();return;}
+    var batch=batches[batchIdx]; batchIdx++;
+    var enviados=(batchIdx-1)*BATCH;
+    showT("Subiendo "+Math.min(enviados+BATCH,total)+"/"+total+" lotes...");
+
+    var promises=batch.map(function(item){
+      var url=SCRIPT_URL+"?accion=set_lote"+
+        "&partida="+encodeURIComponent(item.pid)+
+        "&mz="+encodeURIComponent(item.mz)+
+        "&lote="+encodeURIComponent(item.l)+
+        "&fecha="+encodeURIComponent(fechaRegistro)+
+        "&ej=0&acum=1";
+      return fetch(url).catch(function(){return null;});
+    });
+
+    Promise.all(promises).then(function(){siguienteBatch();});
+  }
+
+  siguienteBatch();
 }
 
 // ── Inicialización: cargar estado completo desde Sheets ──
