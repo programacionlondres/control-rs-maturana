@@ -1390,19 +1390,6 @@ function guardar(){
   updateSVG();
   renderManzanas();
   showT("Guardado");
-  // Guardar en Google Sheets (sin bloquear la UI)
-  var fecha=fechaRegistro;
-  fetch(SCRIPT_URL,{
-    method:"POST",
-    body:JSON.stringify({
-      accion:"guardar_snapshot",
-      fecha:fecha,
-      partida:partidaActual,
-      manzana:ca.mz,
-      lote:ca.l,
-      ejecutado:nuevo?1:0
-    })
-  }).catch(function(){});
 }
 
 function cm(){ document.getElementById("mo").classList.remove("v"); ca=null; }
@@ -1593,37 +1580,18 @@ function mostrarTabSemana(){
 
   document.getElementById("rep-fecha").textContent+=" (vs viernes "+fechaViernes+")";
 
-  // Obtener todos los snapshots del viernes pasado
-  fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes+"&partida=P01")
+  // Obtener snapshot del viernes pasado (un solo request)
+  fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes)
     .then(function(r){return r.json();})
     .catch(function(){return {ok:false,datos:[]};})
-    .then(function(snap){
-      // Construir mapa de ejecutados semana anterior por partida
-      // Necesitamos todos los snapshots — hacemos una por partida
-      var promesas=[];
+    .then(function(data){
       var snapsPorPartida={};
-      
-      function cargarPartida(idx){
-        if(idx>=PARTIDAS.length){
-          generarTablaCierre(snapsPorPartida);
-          return;
+      if(data.ok && data.datos){
+        for(var i=0;i<data.datos.length;i++){
+          snapsPorPartida[data.datos[i].partida]=data.datos[i].ejecutados||0;
         }
-        var pid=PARTIDAS[idx].id;
-        fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes+"&partida="+pid)
-          .then(function(r){return r.json();})
-          .catch(function(){return {ok:false,datos:[]};})
-          .then(function(data){
-            var count=0;
-            if(data.ok&&data.datos){
-              for(var s=0;s<data.datos.length;s++){
-                if(data.datos[s].ejecutado==1) count++;
-              }
-            }
-            snapsPorPartida[pid]=count;
-            cargarPartida(idx+1);
-          });
       }
-      cargarPartida(0);
+      generarTablaCierre(snapsPorPartida);
     });
 }
 
@@ -1731,28 +1699,25 @@ function showT(m){
 }
 
 function cerrarDia(){
-  if(!confirm("Cerrar el dia y guardar snapshot completo en Google Sheets?")) return;
-  var fecha=new Date().toISOString().slice(0,10);
-  var registros=[];
-  for(var i=0;i<MANZANAS.length;i++){
-    var mz=MANZANAS[i];
-    for(var j=0;j<mz.lotes.length;j++){
-      for(var k=0;k<PARTIDAS.length;k++){
-        var pid=PARTIDAS[k].id;
-        var ej=getEj(pid,mz.id,mz.lotes[j])?1:0;
-        registros.push({accion:"guardar_snapshot",fecha:fecha,partida:pid,manzana:mz.id,lote:mz.lotes[j],ejecutado:ej});
+  if(!confirm("Cerrar día "+fechaRegistro+" y guardar en Google Sheets?")) return;
+  var datos=[];
+  for(var k=0;k<PARTIDAS.length;k++){
+    var pid=PARTIDAS[k].id;
+    var ej=0,total=0;
+    for(var i=0;i<MANZANAS.length;i++){
+      var mz=MANZANAS[i];
+      for(var j=0;j<mz.lotes.length;j++){
+        total++;
+        if(getEj(pid,mz.id,mz.lotes[j])) ej++;
       }
     }
+    datos.push({partida:pid,ejecutados:ej,total:total});
   }
-  showT("Guardando "+registros.length+" registros...");
-  var enviados=0;
-  function enviarSiguiente(){
-    if(enviados>=registros.length){showT("Dia cerrado y guardado en Sheets");return;}
-    fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify(registros[enviados])})
-      .then(function(){enviados++;enviarSiguiente();})
-      .catch(function(){enviados++;enviarSiguiente();});
-  }
-  enviarSiguiente();
+  var url=SCRIPT_URL+"?accion=cerrar_dia_partidas&fecha="+fechaRegistro+"&datos="+encodeURIComponent(JSON.stringify(datos));
+  showT("Guardando...");
+  fetch(url).then(function(r){return r.json();})
+    .then(function(r){showT(r.ok?"✓ Día guardado en Sheets":"Error: "+(r.error||""));})
+    .catch(function(){showT("No se pudo conectar");});
 }
 
 function abrirHistorico(){
@@ -1775,49 +1740,50 @@ function buscarHistorico(){
   var fecha=document.getElementById("hist-fecha").value;
   var partida=document.getElementById("hist-partida").value;
   if(!fecha){alert("Selecciona una fecha");return;}
-  document.getElementById("hist-resultado").textContent="Buscando...";
+  document.getElementById("hist-resultado").textContent="";
   document.getElementById("hist-manzanas").innerHTML="";
-  fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fecha+"&partida="+partida)
-    .then(function(r){return r.json();})
-    .then(function(data){
-      if(!data.ok||data.datos.length===0){
-        document.getElementById("hist-resultado").textContent="No hay datos para esa fecha y partida.";
-        return;
-      }
-      document.getElementById("hist-resultado").textContent="";
-      // Construir mapa de ejecutados
-      var ejMap={};
-      for(var i=0;i<data.datos.length;i++){
-        ejMap[data.datos[i].mz+"_"+data.datos[i].lote]=data.datos[i].ejecutado===1||data.datos[i].ejecutado==="1";
-      }
-      // Mostrar por manzana
-      var cont=document.getElementById("hist-manzanas");
-      cont.innerHTML="<div style='font-size:11px;font-weight:600;color:#002060;margin-bottom:6px'>Estado al "+fecha+":</div>";
-      for(var m=0;m<MANZANAS.length;m++){
-        var mz=MANZANAS[m];
-        var ej=0;
-        for(var j=0;j<mz.lotes.length;j++) if(ejMap[mz.id+"_"+mz.lotes[j]]) ej++;
-        var div=document.createElement("div");
-        div.style.cssText="margin-bottom:6px;background:#f5f5f3;border-radius:6px;padding:6px 8px";
-        div.innerHTML="<div style='font-size:11px;font-weight:600;color:#002060;margin-bottom:4px'>"+mz.nombre+" - <span style='color:#375623'>"+ej+"/"+mz.lotes.length+"</span></div>";
-        var grid=document.createElement("div");
-        grid.style.cssText="display:flex;flex-wrap:wrap;gap:2px";
-        for(var j=0;j<mz.lotes.length;j++){
-          var l=mz.lotes[j];
-          var ejecutado=ejMap[mz.id+"_"+l];
-          var c=document.createElement("div");
-          c.style.cssText="width:24px;height:20px;border-radius:3px;border:1px solid;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600;";
-          c.style.background=ejecutado?"#92D050":"#f8f8f5";
-          c.style.borderColor=ejecutado?"#375623":"#ccc";
-          c.style.color=ejecutado?"#1a3a00":"#aaa";
-          c.textContent=l;
-          grid.appendChild(c);
-        }
-        div.appendChild(grid);
-        cont.appendChild(div);
-      }
-    })
-    .catch(function(){ document.getElementById("hist-resultado").textContent="Error al conectar con Google Sheets."; });
+
+  // Leer desde localStorage: lotes marcados ese día con esa partida
+  var ejMap={};
+  var count=0;
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i];
+    for(var j=0;j<mz.lotes.length;j++){
+      var v=localStorage.getItem("aphoy_"+partida+"_"+mz.id+"_"+mz.lotes[j]+"_"+fecha)==="1";
+      ejMap[mz.id+"_"+mz.lotes[j]]=v;
+      if(v) count++;
+    }
+  }
+
+  if(count===0){
+    document.getElementById("hist-resultado").textContent="No hay lotes registrados para esa fecha y partida en este dispositivo.";
+    return;
+  }
+
+  // Mostrar mapa visual por manzana (solo manzanas con actividad)
+  var cont=document.getElementById("hist-manzanas");
+  cont.innerHTML="<div style='font-size:11px;font-weight:600;color:#002060;margin-bottom:6px'>Lotes registrados el "+fecha+" ("+count+" lotes):</div>";
+  for(var m=0;m<MANZANAS.length;m++){
+    var mz=MANZANAS[m];
+    var ej=0;
+    for(var j=0;j<mz.lotes.length;j++) if(ejMap[mz.id+"_"+mz.lotes[j]]) ej++;
+    if(ej===0) continue;
+    var div=document.createElement("div");
+    div.style.cssText="margin-bottom:6px;background:#f5f5f3;border-radius:6px;padding:6px 8px";
+    div.innerHTML="<div style='font-size:11px;font-weight:600;color:#002060;margin-bottom:4px'>"+mz.nombre+" — <span style='color:#375623'>"+ej+" lote"+(ej!==1?"s":"")+"</span></div>";
+    var grid=document.createElement("div");
+    grid.style.cssText="display:flex;flex-wrap:wrap;gap:2px";
+    for(var j=0;j<mz.lotes.length;j++){
+      var l=mz.lotes[j];
+      if(!ejMap[mz.id+"_"+l]) continue;
+      var c=document.createElement("div");
+      c.style.cssText="width:24px;height:20px;border-radius:3px;border:1px solid #375623;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:600;background:#92D050;color:#1a3a00";
+      c.textContent=l;
+      grid.appendChild(c);
+    }
+    div.appendChild(grid);
+    cont.appendChild(div);
+  }
 }
 
 var dias2=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
