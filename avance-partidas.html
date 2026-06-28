@@ -1483,10 +1483,11 @@ function generarTablaDiaria(prog, hoy){
     var bgDia=esDiaSel?"background:#E18426":"";
     th+="<th colspan='2' style='padding:4px 3px;font-size:9px;"+bgDia+"'>"+diasSem[d]+"<br><span style='font-size:7px;font-weight:400;opacity:.8'>"+fechasSem[d].slice(5)+"</span></th>";
   }
-  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#375623'>SEMANA</th></tr>";
+  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#375623'>SEMANA</th>";
+  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#002060'>ACUMULADO</th></tr>";
 
   var th2="<tr style='background:#2D2B5E;color:#fff'><th></th><th></th>";
-  for(var d=0;d<6;d++){
+  for(var d=0;d<7;d++){
     th2+="<th style='padding:3px 2px;font-size:8px;color:#90C8FF'>PR</th><th style='padding:3px 2px;font-size:8px;color:#92D050'>REAL</th>";
   }
   th2+="</tr>";
@@ -1494,15 +1495,19 @@ function generarTablaDiaria(prog, hoy){
   tabla.innerHTML=th+th2;
 
   var totPR=[0,0,0,0,0,0],totREAL=[0,0,0,0,0,0];
+  var totAcumEj=0,totAcumTot=0;
 
   for(var i=0;i<PARTIDAS.length;i++){
     var p=PARTIDAS[i];
 
     // Contar ejecutados por cada día de la semana
     var ejDia=[0,0,0,0,0];
+    var ejAcum=0, totalLotes=0;
     for(var m=0;m<MANZANAS.length;m++){
       var mz=MANZANAS[m];
       for(var j=0;j<mz.lotes.length;j++){
+        totalLotes++;
+        if(getEj(p.id,mz.id,mz.lotes[j])) ejAcum++;
         for(var d=0;d<5;d++){
           if(getEjFecha(p.id,mz.id,mz.lotes[j],fechasSem[d])) ejDia[d]++;
         }
@@ -1512,6 +1517,8 @@ function generarTablaDiaria(prog, hoy){
     var diasProg=prog[p.nombre]||[];
     var prSem=0,realSem=0;
     for(var d=0;d<5;d++) realSem+=ejDia[d];
+
+    var pctAcum=totalLotes>0?Math.round(ejAcum/totalLotes*100):0;
 
     var bg=i%2===0?"#F8F8F8":"#fff";
     if(realSem>0) bg="#FFFBE6";
@@ -1536,16 +1543,26 @@ function generarTablaDiaria(prog, hoy){
     var colSem=prSem>0?(realSem>=prSem?"#375623":"#A32D2D"):"#888";
     row+="<td style='font-size:9px;text-align:center;color:#000080;background:#FFF0D0'>"+prSem+"</td>";
     row+="<td style='font-size:9px;text-align:center;font-weight:700;color:"+colSem+";background:#FFF0D0'>"+realSem+"</td>";
+
+    // Columna acumulado
+    totAcumEj+=ejAcum; totAcumTot+=totalLotes;
+    var colAcum=pctAcum>=80?"#375623":pctAcum>=40?"#5D3900":"#A32D2D";
+    row+="<td style='font-size:9px;text-align:center;color:#888;background:#EEF4FF'>"+totalLotes+"</td>";
+    row+="<td style='font-size:9px;text-align:center;font-weight:700;color:"+colAcum+";background:#EEF4FF'>"+ejAcum+"<br><span style='font-size:7px;font-weight:400'>"+pctAcum+"%</span></td>";
+
     row+="</tr>";
     tabla.innerHTML+=row;
   }
-  
+
   // Fila totales
   var totRow="<tr style='background:#1A1846;color:#fff'><td colspan='2' style='font-size:9px;font-weight:700;padding:4px'>TOTAL</td>";
   for(var d=0;d<6;d++){
     totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totPR[d]+"</td>";
     totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+"</td>";
   }
+  var pctAcumTot=totAcumTot>0?Math.round(totAcumEj/totAcumTot*100):0;
+  totRow+="<td style='font-size:9px;text-align:center;color:#aac4ff'>"+totAcumTot+"</td>";
+  totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totAcumEj+"<br><span style='font-size:7px;font-weight:400'>"+pctAcumTot+"%</span></td>";
   totRow+="</tr>";
   tabla.innerHTML+=totRow;
 }
