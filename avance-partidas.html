@@ -1515,15 +1515,13 @@ function generarTablaDiaria(prog, hoy){
   for(var d=0;d<5;d++){
     var esDiaSel=d===diaSelIdx;
     var bgDia=esDiaSel?"background:#E18426":"";
-    th+="<th colspan='2' style='padding:4px 3px;font-size:9px;"+bgDia+"'>"+diasSem[d]+"<br><span style='font-size:7px;font-weight:400;opacity:.8'>"+fechasSem[d].slice(5)+"</span></th>";
+    var sepDia=d>0?"border-left:2px solid rgba(255,255,255,0.35);":"";th+="<th colspan='2' style='padding:4px 3px;font-size:9px;"+bgDia+";"+sepDia+"'>"+diasSem[d]+"<br><span style='font-size:8px;font-weight:700;opacity:1'>"+fechasSem[d].slice(5)+"</span></th>";
   }
-  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#375623'>SEMANA</th>";
-  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#002060'>ACUMULADO</th></tr>";
+  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#375623;border-left:2px solid rgba(255,255,255,0.35)'>SEMANA</th>";
+  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#002060;border-left:2px solid rgba(255,255,255,0.35)'>ACUMULADO</th></tr>";
 
   var th2="<tr style='background:#2D2B5E;color:#fff'><th></th><th></th>";
-  for(var d=0;d<7;d++){
-    th2+="<th style='padding:3px 2px;font-size:8px;color:#90C8FF'>PR</th><th style='padding:3px 2px;font-size:8px;color:#92D050'>REAL</th>";
-  }
+  for(var d=0;d<7;d++){var sepSub=d>0?"border-left:2px solid rgba(255,255,255,0.2);":"";th2+="<th style='padding:3px 2px;font-size:8px;color:#90C8FF;"+sepSub+"'>PR</th><th style='padding:3px 2px;font-size:8px;color:#92D050'>REAL</th>";}
   th2+="</tr>";
 
   tabla.innerHTML=th+th2;
@@ -1567,8 +1565,7 @@ function generarTablaDiaria(prog, hoy){
       var realDia=ejDia[d];
       totREAL[d]+=realDia;
       var colReal=pr>0?(realDia>=pr?"#375623":"#A32D2D"):"#888";
-      var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";
-      row+="<td style='font-size:9px;text-align:center;color:#000080;"+bgCell+"'>"+pr+"</td>";
+      var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";var sepData=d>0?"border-left:2px solid #b0b0cc;":"";row+="<td style='font-size:9px;text-align:center;color:#000080;"+bgCell+sepData+"'>"+pr+"</td>";
       row+="<td style='font-size:9px;text-align:center;color:"+colReal+";font-weight:600;"+bgCell+"'>"+realDia+"</td>";
     }
 
@@ -1591,7 +1588,7 @@ function generarTablaDiaria(prog, hoy){
   // Fila totales
   var totRow="<tr style='background:#1A1846;color:#fff'><td colspan='2' style='font-size:9px;font-weight:700;padding:4px'>TOTAL</td>";
   for(var d=0;d<6;d++){
-    totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totPR[d]+"</td>";
+var sepTot=d>0?"border-left:2px solid rgba(255,255,255,0.25);":"";totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF;"+sepTot+"'>"+totPR[d]+"</td>";
     totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+"</td>";
   }
   var pctAcumTot=totAcumTot>0?Math.round(totAcumEj/totAcumTot*100):0;
