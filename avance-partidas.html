@@ -1578,98 +1578,122 @@ function mostrarTabSemana(){
   var mesesN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   document.getElementById("rep-fecha").textContent="Cierre de semana al "+diasN[hoy.getDay()]+" "+hoy.getDate()+" de "+mesesN[hoy.getMonth()]+" "+hoy.getFullYear();
 
-  var tabla=document.getElementById("rep-tabla");
-  tabla.innerHTML="<tr style='background:#1A1846;color:#fff'>"+
-    "<th style='padding:5px 3px;font-size:9px'>N</th>"+
-    "<th style='padding:5px 3px;font-size:9px;text-align:left'>PARTIDA</th>"+
-    "<th style='padding:5px 3px;font-size:9px'>Av.AC<br>SEM ANT</th>"+
-    "<th style='padding:5px 3px;font-size:9px'>Av.AC<br>SEM ACT</th>"+
-    "<th style='padding:5px 3px;font-size:9px'>DIF</th>"+
-    "<th style='padding:5px 3px;font-size:9px'>%<br>TOTAL</th>"+
-    "</tr>";
+  // Fechas semana actual y semana anterior
+  var fechasSemAct=getFechasSemana(hoy.toISOString().slice(0,10));
+  // Semana anterior: Monday 7 days before current Monday
+  var lunAnt=new Date(fechasSemAct[0]+"T12:00:00");
+  lunAnt.setDate(lunAnt.getDate()-7);
+  var fechasSemAnt=getFechasSemana(lunAnt.toISOString().slice(0,10));
 
-  // Buscar snapshot del VIERNES PASADO
-  var viernesPasado=new Date(hoy);
-  var diaSemana=hoy.getDay(); // 0=dom, 1=lun...5=vie, 6=sab
-  var diasHastaViernesPasado=diaSemana===0?8:diaSemana+1;
-  viernesPasado.setDate(hoy.getDate()-diasHastaViernesPasado);
-  var fechaViernes=viernesPasado.toISOString().slice(0,10);
+  document.getElementById("rep-fecha").textContent+=" | sem ant: "+fechasSemAnt[0].slice(5)+" – "+fechasSemAnt[4].slice(5);
 
-  document.getElementById("rep-fecha").textContent+=" (vs viernes "+fechaViernes+")";
-
-  // Fechas de la semana ACTUAL (para calcular fallback si Sheets no tiene datos)
-  var fechasSemActual=getFechasSemana(new Date().toISOString().slice(0,10));
-
-  // Obtener snapshot del viernes pasado (un solo request)
-  fetch(SCRIPT_URL+"?accion=get_snapshot&fecha="+fechaViernes)
+  // Obtener programa para valores PR
+  fetch(SCRIPT_URL+"?accion=get_programa")
     .then(function(r){return r.json();})
-    .catch(function(){return {ok:false,datos:[]};})
+    .catch(function(){return {ok:false,programa:[]};})
     .then(function(data){
-      var snapsPorPartida={};
-      var hayDatosSheets=false;
-      if(data.ok && data.datos && data.datos.length>0){
-        hayDatosSheets=true;
-        for(var i=0;i<data.datos.length;i++){
-          snapsPorPartida[data.datos[i].partida]=data.datos[i].ejecutados||0;
+      var prog={};
+      if(data.ok && data.programa){
+        for(var i=0;i<data.programa.length;i++){
+          prog[data.programa[i].nombre]=data.programa[i].dias;
         }
       }
-      generarTablaCierre(snapsPorPartida, hayDatosSheets, fechasSemActual);
+      generarTablaCierre(prog, fechasSemAnt, fechasSemAct);
     });
 }
 
-function generarTablaCierre(snapsPorPartida, hayDatosSheets, fechasSemActual){
+function generarTablaCierre(prog, fechasSemAnt, fechasSemAct){
   var tabla=document.getElementById("rep-tabla");
-  var totAnt=0,totAct=0;
+
+  // Encabezado
+  tabla.innerHTML=
+    "<tr style='background:#1A1846;color:#fff'>"+
+    "<th style='padding:5px 3px;font-size:9px' rowspan='2'>N</th>"+
+    "<th style='padding:5px 3px;font-size:9px;text-align:left' rowspan='2'>PARTIDA</th>"+
+    "<th colspan='3' style='padding:5px 3px;font-size:9px;background:#2D2B5E'>SEMANA ANTERIOR</th>"+
+    "<th colspan='3' style='padding:5px 3px;font-size:9px;background:#375623'>SEMANA ACTUAL</th>"+
+    "<th style='padding:5px 3px;font-size:9px;background:#E18426' rowspan='2'>TEND</th>"+
+    "</tr>"+
+    "<tr style='background:#2D2B5E;color:#ccc;font-size:8px'>"+
+    "<th style='padding:3px 2px'>PR</th><th style='padding:3px 2px;color:#92D050'>REAL</th><th style='padding:3px 2px;color:#FF8C8C'>DIF</th>"+
+    "<th style='padding:3px 2px;background:#375623'>PR</th><th style='padding:3px 2px;background:#375623;color:#92D050'>REAL</th><th style='padding:3px 2px;background:#375623;color:#FF8C8C'>DIF</th>"+
+    "</tr>";
+
+  var totPRant=0,totREALant=0,totPRact=0,totREALact=0;
 
   for(var i=0;i<PARTIDAS.length;i++){
     var p=PARTIDAS[i];
-    var ejActual=0;
-    var ejSemana=0; // lotes únicos ejecutados esta semana
-    for(var m=0;m<MANZANAS.length;m++){
-      var mz=MANZANAS[m];
-      for(var j=0;j<mz.lotes.length;j++){
-        if(getEj(p.id,mz.id,mz.lotes[j])) ejActual++;
-        // ¿Tiene marca de algún día de esta semana?
-        if(fechasSemActual){
-          for(var fd=0;fd<fechasSemActual.length;fd++){
-            if(getEjFecha(p.id,mz.id,mz.lotes[j],fechasSemActual[fd])){ejSemana++;break;}
-          }
+    var diasProg=prog[p.nombre]||[];
+
+    // PR semanal (suma L-V)
+    var prSem=0;
+    for(var d=0;d<5;d++) prSem+=(diasProg[d]?diasProg[d].pr:0);
+
+    // REAL semana anterior (suma de marcas diarias por día)
+    var realAnt=0;
+    for(var d=0;d<5;d++){
+      for(var m=0;m<MANZANAS.length;m++){
+        var mz=MANZANAS[m];
+        for(var j=0;j<mz.lotes.length;j++){
+          if(getEjFecha(p.id,mz.id,mz.lotes[j],fechasSemAnt[d])) realAnt++;
         }
       }
     }
 
-    var ejAnterior;
-    if(hayDatosSheets){
-      ejAnterior=snapsPorPartida[p.id]||0;
-    } else {
-      // Sin datos en Sheets: estimar SEM ANT = acumulado − lo ejecutado esta semana
-      ejAnterior=Math.max(0, ejActual-ejSemana);
+    // REAL semana actual
+    var realAct=0;
+    for(var d=0;d<5;d++){
+      for(var m=0;m<MANZANAS.length;m++){
+        var mz=MANZANAS[m];
+        for(var j=0;j<mz.lotes.length;j++){
+          if(getEjFecha(p.id,mz.id,mz.lotes[j],fechasSemAct[d])) realAct++;
+        }
+      }
     }
-    var dif=ejActual-ejAnterior;
-    var pct=Math.round(ejActual/TOTAL*100);
-    totAnt+=ejAnterior; totAct+=ejActual;
-    
+
+    var difAnt=realAnt-prSem;
+    var difAct=realAct-prSem;
+    // Tendencia: ¿se redujo el retraso respecto a semana anterior?
+    // difAct > difAnt → mejora (ej: -20 > -25), difAct < difAnt → empeora
+    var tend=difAct-difAnt;
+
+    totPRant+=prSem; totREALant+=realAnt;
+    totPRact+=prSem; totREALact+=realAct;
+
     var bg=i%2===0?"#F8F8F8":"#fff";
-    if(dif>0) bg="#F0FFF0";
-    var colDif=dif>0?"#375623":dif<0?"#A32D2D":"#888";
-    
+    var colDifAnt=difAnt>=0?"#375623":difAnt>-5?"#888":"#A32D2D";
+    var colDifAct=difAct>=0?"#375623":difAct>-5?"#888":"#A32D2D";
+    var tendTxt=tend>0?"▲"+tend:tend<0?"▼"+Math.abs(tend):"=";
+    var colTend=tend>0?"#375623":tend<0?"#A32D2D":"#888";
+    var bgTend=tend>0?"#F0FFF0":tend<0?"#FFF0F0":"#f8f8f8";
+
     tabla.innerHTML+="<tr style='background:"+bg+"'>"+
-      "<td style='font-size:9px;text-align:center;padding:4px 3px'>"+(i+1)+"</td>"+
-      "<td style='font-size:9px;padding:4px'>"+p.nombre+"</td>"+
-      "<td style='font-size:9px;text-align:center;color:#000080'>"+ejAnterior+"</td>"+
-      "<td style='font-size:9px;text-align:center;font-weight:700;color:#1A1846'>"+ejActual+"</td>"+
-      "<td style='font-size:9px;text-align:center;font-weight:700;color:"+colDif+"'>"+(dif>0?"+":"")+dif+"</td>"+
-      "<td style='font-size:9px;text-align:center'>"+pct+"%</td>"+
+      "<td style='font-size:9px;text-align:center;padding:4px 2px'>"+(i+1)+"</td>"+
+      "<td style='font-size:9px;padding:4px 3px'>"+p.nombre+"</td>"+
+      "<td style='font-size:9px;text-align:center;color:#90C8FF'>"+prSem+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:600;color:#1A1846'>"+realAnt+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:700;color:"+colDifAnt+"'>"+(difAnt>0?"+":"")+difAnt+"</td>"+
+      "<td style='font-size:9px;text-align:center;color:#90C8FF'>"+prSem+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:600;color:#1A1846'>"+realAct+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:700;color:"+colDifAct+"'>"+(difAct>0?"+":"")+difAct+"</td>"+
+      "<td style='font-size:9px;text-align:center;font-weight:700;color:"+colTend+";background:"+bgTend+"'>"+tendTxt+"</td>"+
       "</tr>";
   }
-  
-  var difTot=totAct-totAnt;
+
+  // Fila totales
+  var difAntTot=totREALant-totPRant;
+  var difActTot=totREALact-totPRact;
+  var tendTot=difActTot-difAntTot;
+  var tendTotTxt=tendTot>0?"▲"+tendTot:tendTot<0?"▼"+Math.abs(tendTot):"=";
   tabla.innerHTML+="<tr style='background:#1A1846;color:#fff'>"+
     "<td colspan='2' style='font-size:9px;font-weight:700;padding:5px 4px'>TOTAL</td>"+
-    "<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totAnt+"</td>"+
-    "<td style='font-size:9px;text-align:center;font-weight:700;color:#92D050'>"+totAct+"</td>"+
-    "<td style='font-size:9px;text-align:center;font-weight:700;color:#E18426'>"+(difTot>0?"+":"")+difTot+"</td>"+
-    "<td style='font-size:9px;text-align:center'>-</td>"+
+    "<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totPRant+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:#92D050'>"+totREALant+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:"+(difAntTot>=0?"#92D050":"#FF8C8C")+"'>"+(difAntTot>0?"+":"")+difAntTot+"</td>"+
+    "<td style='font-size:9px;text-align:center;color:#90C8FF'>"+totPRact+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:#92D050'>"+totREALact+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:"+(difActTot>=0?"#92D050":"#FF8C8C")+"'>"+(difActTot>0?"+":"")+difActTot+"</td>"+
+    "<td style='font-size:9px;text-align:center;font-weight:700;color:"+(tendTot>=0?"#92D050":"#FF8C8C")+"'>"+tendTotTxt+"</td>"+
     "</tr>";
 }
 
