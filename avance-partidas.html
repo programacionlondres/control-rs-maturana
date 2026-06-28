@@ -1339,7 +1339,7 @@ function updateSVG(){
       var el=document.getElementById("mz"+mz.id.toLowerCase()+"-vivienda-"+num);
       if(el){
         var rect=el.querySelector("rect");
-        if(rect) rect.className.baseVal=getEj(partidaActual,mz.id,l)?"lot lot-ej":"lot";
+        if(rect) rect.className.baseVal=getEj(partidaActual,mz.id,l)?"lot lot-ej":"lot";         el.style.cursor="pointer";         (function(mzid,lot){           el.onclick=function(e){e.stopPropagation();clickLote(mzid,lot);};         })(mz.id,l);
         el.style.cursor="pointer";
         (function(mzid,lot){
           el.onclick=function(e){e.stopPropagation();clickLote(mzid,lot);};
