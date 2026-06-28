@@ -1779,6 +1779,63 @@ cargarDatosIniciales();
 renderRes();
 renderManzanas();
 updateSVG();
+
+function abrirInformeSemanal(){
+  var hoy=new Date();
+  var diasN=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  var mesesN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  document.getElementById("inf-semana").textContent=diasN[hoy.getDay()]+" "+hoy.getDate()+" de "+mesesN[hoy.getMonth()]+" "+hoy.getFullYear();
+  var tot_g=0,sg_g=0,r0_g=0,r1_g=0,rf_g=0;
+  var html="<tr style='background:#f5f5f3'><th style='padding:5px 6px;text-align:left;border-bottom:1px solid #ddd'>Manzana</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd'>Total</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#185FA5'>&ge;SG</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#BA7517'>&ge;R0</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#3B6D11'>&ge;R1</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#1D9E75'>RF</th></tr>";
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i],sg=0,r0=0,r1=0,rf=0;
+    for(var j=0;j<mz.lotes.length;j++){var u=uH(gH(mz.id,mz.lotes[j]));if(u==="sg")sg++;else if(u==="r0"||u==="r0obs")r0++;else if(u==="r1")r1++;else if(u==="rf")rf++;}
+    var tot=mz.lotes.length,acSG=sg+r0+r1+rf,acR0=r0+r1+rf,acR1=r1+rf;
+    tot_g+=tot;sg_g+=acSG;r0_g+=acR0;r1_g+=acR1;rf_g+=rf;
+    html+="<tr style='border-bottom:1px solid #eee'><td style='padding:5px 6px;font-weight:500'>"+mz.nombre+"</td><td style='padding:5px;text-align:center'>"+tot+"</td><td style='padding:5px;text-align:center;color:#185FA5'>"+acSG+"</td><td style='padding:5px;text-align:center;color:#BA7517'>"+acR0+"</td><td style='padding:5px;text-align:center;color:#3B6D11'>"+acR1+"</td><td style='padding:5px;text-align:center;color:#1D9E75;font-weight:600'>"+rf+"</td></tr>";
+  }
+  html+="<tr style='background:#f0f7ed;font-weight:600'><td style='padding:5px 6px'>TOTAL</td><td style='padding:5px;text-align:center'>"+tot_g+"</td><td style='padding:5px;text-align:center;color:#185FA5'>"+sg_g+"</td><td style='padding:5px;text-align:center;color:#BA7517'>"+r0_g+"</td><td style='padding:5px;text-align:center;color:#3B6D11'>"+r1_g+"</td><td style='padding:5px;text-align:center;color:#1D9E75'>"+rf_g+"</td></tr>";
+  document.getElementById("inf-tabla").innerHTML=html;
+  document.getElementById("inf-nota").textContent="Control de Rs · Constructora Londres · Enrique Maturana";
+  document.getElementById("mr-sem").classList.add("v");
+}
+
+function cerrarInforme(){
+  document.getElementById("mr-sem").classList.remove("v");
+}
+
+function descargarInforme(){
+  var target=document.getElementById("mrd-sem");
+  html2canvas(target,{scale:2,useCORS:true,backgroundColor:"#ffffff"}).then(function(canvas){
+    var a=document.createElement("a");
+    a.download="informe_semanal_rs_"+new Date().toISOString().slice(0,10)+".png";
+    a.href=canvas.toDataURL("image/png");
+    a.click();
+    showT("Informe descargado");
+  });
+}
+
+function cerrarDiaRs(){
+  if(!admin){showT("Requiere acceso admin");openPin();return;}
+  if(!confirm("¿Cerrar día y guardar estado en Google Sheets?"))return;
+  var datos=[];
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i];
+    for(var j=0;j<mz.lotes.length;j++){
+      var l=mz.lotes[j],h=gH(mz.id,l),u=uH(h);
+      if(u)datos.push({manzana:mz.id,lote:l,estado:u});
+    }
+  }
+  var hoy=new Date().toISOString().slice(0,10);
+  showT("Guardando...");
+  fetch(SCRIPT_URL,{
+    method:"POST",
+    body:JSON.stringify({accion:"cerrarDia",fecha:hoy,datos:datos}),
+    headers:{"Content-Type":"application/json"}
+  }).then(function(r){return r.json();})
+  .then(function(r){showT(r.ok?"Día cerrado ✓":"Error: "+(r.msg||""));})
+  .catch(function(){showT("No se pudo conectar");});
+}
 </script>
 </body>
 </html>
