@@ -142,6 +142,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
     <button class="bh bh-admin" onclick="openPin()">Admin</button>
     <button class="bh bh-rep" onclick="abrirReporte()">Reporte</button>
     <button class="bh" style="background:#156082;color:#fff" onclick="abrirHistorico()">Historial</button>
+    <button class="bh" style="background:#156082;color:#fff" onclick="forzarSync()">⟳ Sync</button>
     <button class="bh" style="background:#FF6B6B;color:#fff" onclick="cerrarDia()">Cerrar dia</button>
     <button class="bh bh-img" onclick="capturar()">Imagen</button>
   </div>
@@ -1886,6 +1887,15 @@ document.getElementById("fh").textContent=dias2[hoy2.getDay()]+" "+hoy2.getDate(
 var TOTAL=215;
 document.getElementById("fecha-reg-input").value = fechaRegistro;
 
+// ── Forzar sincronización completa manual ──
+function forzarSync(){
+  showT("Subiendo todo a Sheets...");
+  subirTodoASheets(function(){
+    showT("✓ Listo — recarga en el otro dispositivo");
+    setTimeout(function(){showT("");},4000);
+  });
+}
+
 // ── Subir TODO el estado acumulado a Sheets (por partida) ──
 function subirTodoASheets(onDone){
   var idx=0;
@@ -1937,12 +1947,18 @@ function inicializar(){
           localStorage.setItem("ap_"+d.partida+"_"+d.mz+"_"+d.lote,"1");
         }
       }
-      // Paso 3: Si había datos locales no subidos, subirlos ahora a Sheets
-      if(reconstruidos>0 || (data && data.ok && data.datos.length===0)){
-        showT("Subiendo datos a Sheets...");
+      // Paso 3: Comparar local vs Sheets — si local tiene más, subir todo
+      var localCount=0;
+      for(var i=0;i<localStorage.length;i++){
+        var k=localStorage.key(i);
+        if(k && k.indexOf("ap_")===0 && k.indexOf("aphoy_")===-1 && localStorage.getItem(k)==="1") localCount++;
+      }
+      var sheetsCount=(data && data.ok)?data.datos.length:0;
+      if(localCount>sheetsCount || reconstruidos>0){
+        showT("Subiendo datos a Sheets ("+localCount+" lotes)...");
         subirTodoASheets(function(){
-          showT("Sincronizado ✓");
-          setTimeout(function(){showT("");},2000);
+          showT("Sincronizado ✓ ("+localCount+" lotes)");
+          setTimeout(function(){showT("");},3000);
         });
       } else {
         showT("Sincronizado ✓");
