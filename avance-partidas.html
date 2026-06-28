@@ -123,6 +123,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 .prog-tabla td:nth-child(n+3){text-align:center}
 .prog-tabla input{width:36px;padding:2px;text-align:center;border:1px solid #ccc;border-radius:3px;font-size:11px}
 .prog-tabla tr:nth-child(even) td{background:#f5f5f3}
+.fecha-reg-bar{background:#FFF8DC;border-bottom:2px solid #E18426;padding:5px 1rem;display:flex;align-items:center;gap:8px;font-size:11px;color:#5D3900;flex-wrap:wrap}
+.fecha-reg-bar.hoy{background:#EEF4FF;border-color:#4A90D9;color:#002060}
+.fecha-reg-bar input[type=date]{border:1px solid #ccc;border-radius:5px;padding:2px 6px;font-size:11px;font-family:inherit;color:#333;background:#fff}
+.fecha-reg-aviso{font-weight:700;color:#A32D2D}
+.fecha-reg-bar.hoy .fecha-reg-aviso{color:#375623}
 </style>
 </head>
 <body>
@@ -141,6 +146,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
     <button class="bh bh-img" onclick="capturar()">Imagen</button>
   </div>
 </div></div>
+<div class="fecha-reg-bar hoy" id="fecha-reg-bar">
+  <span>📅 Registrando para:</span>
+  <input type="date" id="fecha-reg-input" onchange="cambiarFecha(this.value)">
+  <span class="fecha-reg-aviso" id="fecha-reg-aviso">(hoy)</span>
+</div>
 <div class="partida-wrap">
   <div class="partida-label">Selecciona la partida:</div>
   <select class="partida-select" id="sel-partida" onchange="cambiarPartida()">
@@ -1245,10 +1255,29 @@ function key(pid,mz,l){ return "ap_"+pid+"_"+mz+"_"+l; }
 function getEj(pid,mz,l){ return localStorage.getItem(key(pid,mz,l))==="1"; }
 function setEj(pid,mz,l,v){ if(v) localStorage.setItem(key(pid,mz,l),"1"); else localStorage.removeItem(key(pid,mz,l)); }
 
-// Obtener ejecutados HOY
+// Fecha de registro (puede ser distinta a hoy para ingresos retroactivos)
+var fechaRegistro = new Date().toISOString().slice(0,10);
+
+function cambiarFecha(f){
+  fechaRegistro = f;
+  var hoyStr = new Date().toISOString().slice(0,10);
+  var bar = document.getElementById("fecha-reg-bar");
+  var aviso = document.getElementById("fecha-reg-aviso");
+  if(f === hoyStr){
+    bar.className = "fecha-reg-bar hoy";
+    aviso.textContent = "(hoy)";
+  } else {
+    bar.className = "fecha-reg-bar";
+    aviso.textContent = f < hoyStr ? "⚠ Retroactivo" : "⚠ Futuro";
+  }
+  renderKPIs();
+  updateSVG();
+  renderManzanas();
+}
+
+// Obtener ejecutados en la fecha seleccionada
 function keyHoy(pid,mz,l){
-  var d=new Date().toISOString().slice(0,10);
-  return "aphoy_"+pid+"_"+mz+"_"+l+"_"+d;
+  return "aphoy_"+pid+"_"+mz+"_"+l+"_"+fechaRegistro;
 }
 function getEjHoy(pid,mz,l){ return localStorage.getItem(keyHoy(pid,mz,l))==="1"; }
 function setEjHoy(pid,mz,l,v){ if(v) localStorage.setItem(keyHoy(pid,mz,l),"1"); else localStorage.removeItem(keyHoy(pid,mz,l)); }
@@ -1362,7 +1391,7 @@ function guardar(){
   renderManzanas();
   showT("Guardado");
   // Guardar en Google Sheets (sin bloquear la UI)
-  var fecha=new Date().toISOString().slice(0,10);
+  var fecha=fechaRegistro;
   fetch(SCRIPT_URL,{
     method:"POST",
     body:JSON.stringify({
@@ -1409,7 +1438,7 @@ function mostrarTabDiario(){
   document.getElementById("tab-semana").style.fontWeight="400";
   document.getElementById("tab-semana").style.borderBottom="2px solid transparent";
   
-  var hoy=new Date();
+  var hoy=new Date(fechaRegistro+"T12:00:00");
   var diasN=["domingo","lunes","martes","miercoles","jueves","viernes","sabado"];
   var mesesN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   document.getElementById("rep-fecha").textContent="Reporte al "+diasN[hoy.getDay()]+" "+hoy.getDate()+" de "+mesesN[hoy.getMonth()]+" "+hoy.getFullYear();
@@ -1767,9 +1796,8 @@ var hoy2=new Date();
 document.getElementById("fh").textContent=dias2[hoy2.getDay()]+" "+hoy2.getDate()+" de "+meses2[hoy2.getMonth()]+" "+hoy2.getFullYear();
 
 var TOTAL=215;
-renderKPIs();
-updateSVG();
-renderManzanas();
+document.getElementById("fecha-reg-input").value = fechaRegistro;
+cambiarFecha(fechaRegistro);
 </script>
 </body>
 </html>
