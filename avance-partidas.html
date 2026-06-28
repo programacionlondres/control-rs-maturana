@@ -1460,60 +1460,90 @@ function mostrarTabDiario(){
     });
 }
 
+function getFechasSemana(fechaRef){
+  // Devuelve [fechaLunes, fechaMartes, ..., fechaViernes] de la semana que contiene fechaRef
+  var ref=new Date(fechaRef+"T12:00:00");
+  var dow=ref.getDay(); // 0=dom,1=lun,...
+  var diffLun=dow===0?-6:1-dow;
+  var lun=new Date(ref);
+  lun.setDate(ref.getDate()+diffLun);
+  var fechas=[];
+  for(var i=0;i<5;i++){
+    var d=new Date(lun);
+    d.setDate(lun.getDate()+i);
+    fechas.push(d.toISOString().slice(0,10));
+  }
+  return fechas;
+}
+
+function getEjFecha(pid,mz,l,fecha){
+  return localStorage.getItem("aphoy_"+pid+"_"+mz+"_"+l+"_"+fecha)==="1";
+}
+
 function generarTablaDiaria(prog, hoy){
   var diasSem=["L","M","X","J","V"];
   var tabla=document.getElementById("rep-tabla");
-  
-  // Header
+
+  // Fechas de cada día de la semana que contiene fechaRegistro
+  var fechasSem=getFechasSemana(fechaRegistro);
+  // Índice del día seleccionado dentro de la semana (0=L...4=V), -1 si es fin de semana
+  var diaSelIdx=fechasSem.indexOf(fechaRegistro);
+
+  // Header con fechas en cada columna
   var th="<tr style='background:#1A1846;color:#fff'><th style='padding:4px 3px;font-size:9px'>N</th><th style='padding:4px 3px;font-size:9px;text-align:left'>PARTIDA</th>";
   for(var d=0;d<5;d++){
-    th+="<th colspan='2' style='padding:4px 3px;font-size:9px'>"+diasSem[d]+"</th>";
+    var esDiaSel=d===diaSelIdx;
+    var bgDia=esDiaSel?"background:#E18426":"";
+    th+="<th colspan='2' style='padding:4px 3px;font-size:9px;"+bgDia+"'>"+diasSem[d]+"<br><span style='font-size:7px;font-weight:400;opacity:.8'>"+fechasSem[d].slice(5)+"</span></th>";
   }
-  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#E18426'>SEMANA</th></tr>";
-  
+  th+="<th colspan='2' style='padding:4px 3px;font-size:9px;background:#375623'>SEMANA</th></tr>";
+
   var th2="<tr style='background:#2D2B5E;color:#fff'><th></th><th></th>";
   for(var d=0;d<6;d++){
     th2+="<th style='padding:3px 2px;font-size:8px;color:#90C8FF'>PR</th><th style='padding:3px 2px;font-size:8px;color:#92D050'>REAL</th>";
   }
   th2+="</tr>";
-  
+
   tabla.innerHTML=th+th2;
-  
+
   var totPR=[0,0,0,0,0,0],totREAL=[0,0,0,0,0,0];
-  
+
   for(var i=0;i<PARTIDAS.length;i++){
     var p=PARTIDAS[i];
-    var ejTotal=0,ejHoy=0;
+
+    // Contar ejecutados por cada día de la semana
+    var ejDia=[0,0,0,0,0];
     for(var m=0;m<MANZANAS.length;m++){
       var mz=MANZANAS[m];
       for(var j=0;j<mz.lotes.length;j++){
-        if(getEj(p.id,mz.id,mz.lotes[j])) ejTotal++;
-        if(getEjHoy(p.id,mz.id,mz.lotes[j])) ejHoy++;
+        for(var d=0;d<5;d++){
+          if(getEjFecha(p.id,mz.id,mz.lotes[j],fechasSem[d])) ejDia[d]++;
+        }
       }
     }
-    
+
     var diasProg=prog[p.nombre]||[];
-    var prSem=0,realSem=ejHoy;
-    
+    var prSem=0,realSem=0;
+    for(var d=0;d<5;d++) realSem+=ejDia[d];
+
     var bg=i%2===0?"#F8F8F8":"#fff";
-    if(ejHoy>0) bg="#FFFBE6";
-    
-    var row="<tr style='background:"+bg+"'><td style='font-size:9px;text-align:center'>"+( i+1)+"</td>";
+    if(realSem>0) bg="#FFFBE6";
+
+    var row="<tr style='background:"+bg+"'><td style='font-size:9px;text-align:center'>"+(i+1)+"</td>";
     row+="<td style='font-size:9px;padding:3px 4px'>"+p.nombre+"</td>";
-    
+
     for(var d=0;d<5;d++){
       var pr=diasProg[d]?diasProg[d].pr:0;
       prSem+=pr;
       totPR[d]+=pr;
-      // REAL por dia: aproximacion desde ejHoy (hoy) o 0
-      var realDia=d===hoy.getDay()-1?ejHoy:0;
+      var realDia=ejDia[d];
       totREAL[d]+=realDia;
-      var pctDia=pr>0?Math.round(realDia/pr*100):"-";
       var colReal=pr>0?(realDia>=pr?"#375623":"#A32D2D"):"#888";
-      row+="<td style='font-size:9px;text-align:center;color:#000080'>"+pr+"</td>";
-      row+="<td style='font-size:9px;text-align:center;color:"+colReal+";font-weight:600'>"+realDia+"</td>";
+      var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";
+      row+="<td style='font-size:9px;text-align:center;color:#000080;"+bgCell+"'>"+pr+"</td>";
+      row+="<td style='font-size:9px;text-align:center;color:"+colReal+";font-weight:600;"+bgCell+"'>"+realDia+"</td>";
     }
-    
+
     totPR[5]+=prSem;
     totREAL[5]+=realSem;
     var colSem=prSem>0?(realSem>=prSem?"#375623":"#A32D2D"):"#888";
