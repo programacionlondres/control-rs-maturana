@@ -1734,6 +1734,9 @@ function capturarReporte(){
   var el=document.getElementById("mrd");
   var oldMax=el.style.maxHeight,oldOver=el.style.overflowY,oldW=el.style.width,oldMinW=el.style.minWidth,oldMaxW=el.style.maxWidth,oldBR=el.style.borderRadius;
   var TARGET_W=720;
+  var btnsEl=document.querySelector(".rep-btns");
+  var oldBtnsDisplay=btnsEl?btnsEl.style.display:"";
+  if(btnsEl) btnsEl.style.display="none";
   el.style.maxHeight="none";el.style.overflowY="visible";
   el.style.width=TARGET_W+"px";el.style.minWidth=TARGET_W+"px";el.style.maxWidth=TARGET_W+"px";el.style.borderRadius="12px";
   function restore(){el.style.maxHeight=oldMax;el.style.overflowY=oldOver;el.style.width=oldW;el.style.minWidth=oldMinW;el.style.maxWidth=oldMaxW;el.style.borderRadius=oldBR;}
