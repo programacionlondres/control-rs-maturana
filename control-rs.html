@@ -1817,23 +1817,26 @@ function descargarInforme(){
 
 function cerrarDiaRs(){
   if(!admin){showT("Requiere acceso admin");openPin();return;}
-  if(!confirm("¿Cerrar día y guardar estado en Google Sheets?"))return;
-  var datos=[];
+  if(!confirm("¿Cerrar día y guardar avance en Google Sheets?"))return;
+  // Calcular totales por manzana
+  var totales=[];
   for(var i=0;i<MANZANAS.length;i++){
-    var mz=MANZANAS[i];
+    var mz=MANZANAS[i],sg=0,r0=0,r1=0,rf=0;
     for(var j=0;j<mz.lotes.length;j++){
-      var l=mz.lotes[j],h=gH(mz.id,l),u=uH(h);
-      if(u)datos.push({manzana:mz.id,lote:l,estado:u});
+      var u=uH(gH(mz.id,mz.lotes[j]));
+      if(u==="sg")sg++;
+      else if(u==="r0"||u==="r0obs")r0++;
+      else if(u==="r1")r1++;
+      else if(u==="rf")rf++;
     }
+    totales.push({manzana:mz.id,sg:sg,r0:r0,r1:r1,rf:rf,total:mz.lotes.length});
   }
   var hoy=new Date().toISOString().slice(0,10);
+  var url=SCRIPT_URL+"?accion=cerrarDia&fecha="+hoy+"&datos="+encodeURIComponent(JSON.stringify(totales));
   showT("Guardando...");
-  fetch(SCRIPT_URL,{
-    method:"POST",
-    body:JSON.stringify({accion:"cerrarDia",fecha:hoy,datos:datos}),
-    headers:{"Content-Type":"application/json"}
-  }).then(function(r){return r.json();})
-  .then(function(r){showT(r.ok?"Día cerrado ✓":"Error: "+(r.msg||""));})
+  fetch(url)
+  .then(function(r){return r.json();})
+  .then(function(r){showT(r.ok?"Día cerrado ✓ ("+r.manzanas+" manzanas)":"Error: "+(r.error||""));})
   .catch(function(){showT("No se pudo conectar");});
 }
 </script>
