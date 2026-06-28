@@ -1605,22 +1605,12 @@ function generarTablaDiaria(prog, hoy){
     tabla.innerHTML+=row;
   }
 
-  // Fila totales (PR + REAL por día)
-  var totRow="<tr style='background:#1A1846;color:#fff'><td colspan='2' style='font-size:9px;font-weight:700;padding:4px'>TOTAL</td>";
+  // Calcular avgCArr para fila % cumplimiento
   var avgCArr=[];
   for(var d=0;d<6;d++){
-    var sepTot="border-left:2px solid rgba(255,255,255,0.25);";
     var avgC=cumplDia[d].length>0?cumplDia[d].reduce(function(a,b){return a+b;},0)/cumplDia[d].length:null;
     avgCArr.push(avgC);
-    totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF;"+sepTot+"'>"+totPR[d]+"</td>";
-    totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+"</td>";
-    totRow+="<td style='font-size:8px;text-align:center;color:#FFD700;font-weight:700'></td>";
   }
-  var pctAcumTot=totAcumTot>0?Math.round(totAcumEj/totAcumTot*100):0;
-  totRow+="<td style='font-size:9px;text-align:center;color:#aac4ff;border-left:2px solid rgba(255,255,255,0.25)'>"+totAcumTot+"</td>";
-  totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totAcumEj+"<br><span style='font-size:7px;font-weight:400'>"+pctAcumTot+"%</span></td>";
-  totRow+="</tr>";
-  tabla.innerHTML+=totRow;
 
   // Fila % cumplimiento del día (celdas combinadas)
   var pctRow="<tr style='background:#0D1433;color:#fff'><td colspan='2' style='font-size:8px;font-weight:700;padding:3px 4px;color:#aac4ff'>% CUMPLIMIENTO</td>";
