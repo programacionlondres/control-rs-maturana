@@ -1574,8 +1574,8 @@ function generarTablaDiaria(prog, hoy){
       var colReal=pr>0?(realDia>=pr?"#375623":"#A32D2D"):"#888";
       var bgCell=d===diaSelIdx?"background:#FFF8DC;":"";
       var sepData="border-left:2px solid #b0b0cc;";
-      // Cumplimiento: min(real/pr, 1) solo si PR>0
-      var cumpl=(pr>0)?Math.min(realDia/pr,1):null;
+      // Cumplimiento: PR=0+REAL>0→100%, PR>0→min(R/P,1), ambos=0→null
+      var cumpl=(realDia===0&&pr===0)?null:(pr===0?1:Math.min(realDia/pr,1));
       if(cumpl!==null) cumplDia[d].push(cumpl);
       var cumplTxt=cumpl!==null?Math.round(cumpl*100)+"%":"";
       var colCumpl=cumpl!==null?(cumpl>=1?"#375623":cumpl>=0.5?"#5D3900":"#A32D2D"):"";
@@ -1587,7 +1587,7 @@ function generarTablaDiaria(prog, hoy){
     totPR[5]+=prSem;
     totREAL[5]+=realSem;
     var colSem=prSem>0?(realSem>=prSem?"#375623":"#A32D2D"):"#888";
-    var cumplSem=(prSem>0)?Math.min(realSem/prSem,1):null;
+    var cumplSem=(realSem===0&&prSem===0)?null:(prSem===0?1:Math.min(realSem/prSem,1));
     if(cumplSem!==null) cumplDia[5].push(cumplSem);
     var cumplSemTxt=cumplSem!==null?Math.round(cumplSem*100)+"%":"";
     var colCumplSem=cumplSem!==null?(cumplSem>=1?"#375623":cumplSem>=0.5?"#5D3900":"#A32D2D"):"";
@@ -1605,21 +1605,34 @@ function generarTablaDiaria(prog, hoy){
     tabla.innerHTML+=row;
   }
 
-  // Fila totales
+  // Fila totales (PR + REAL por día)
   var totRow="<tr style='background:#1A1846;color:#fff'><td colspan='2' style='font-size:9px;font-weight:700;padding:4px'>TOTAL</td>";
+  var avgCArr=[];
   for(var d=0;d<6;d++){
     var sepTot="border-left:2px solid rgba(255,255,255,0.25);";
     var avgC=cumplDia[d].length>0?cumplDia[d].reduce(function(a,b){return a+b;},0)/cumplDia[d].length:null;
-    var avgCTxt=avgC!==null?Math.round(avgC*100)+"%":"";
+    avgCArr.push(avgC);
     totRow+="<td style='font-size:9px;text-align:center;color:#90C8FF;"+sepTot+"'>"+totPR[d]+"</td>";
     totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totREAL[d]+"</td>";
-    totRow+="<td style='font-size:9px;text-align:center;color:#FFD700;font-weight:700'>"+avgCTxt+"</td>";
+    totRow+="<td style='font-size:8px;text-align:center;color:#FFD700;font-weight:700'></td>";
   }
   var pctAcumTot=totAcumTot>0?Math.round(totAcumEj/totAcumTot*100):0;
   totRow+="<td style='font-size:9px;text-align:center;color:#aac4ff;border-left:2px solid rgba(255,255,255,0.25)'>"+totAcumTot+"</td>";
   totRow+="<td style='font-size:9px;text-align:center;color:#92D050;font-weight:700'>"+totAcumEj+"<br><span style='font-size:7px;font-weight:400'>"+pctAcumTot+"%</span></td>";
   totRow+="</tr>";
   tabla.innerHTML+=totRow;
+
+  // Fila % cumplimiento del día (celdas combinadas)
+  var pctRow="<tr style='background:#0D1433;color:#fff'><td colspan='2' style='font-size:8px;font-weight:700;padding:3px 4px;color:#aac4ff'>% CUMPLIMIENTO</td>";
+  for(var d=0;d<6;d++){
+    var sepP="border-left:2px solid rgba(255,255,255,0.25);";
+    var avgC=avgCArr[d];
+    var pct=avgC!==null?Math.round(avgC*100):0;
+    var colPct=pct>=80?"#92D050":pct>=50?"#FFD700":"#FF6B6B";
+    pctRow+="<td colspan='3' style='font-size:11px;font-weight:700;text-align:center;color:"+colPct+";"+sepP+"'>"+pct+"%</td>";
+  }
+  pctRow+="<td colspan='2' style='border-left:2px solid rgba(255,255,255,0.25)'></td></tr>";
+  tabla.innerHTML+=pctRow;
 }
 
 function mostrarTabSemana(){
