@@ -1563,7 +1563,7 @@ function generarTablaDiaria(prog, hoy){
     if(realSem>0) bg="#FFFBE6";
 
     var row="<tr style='background:"+bg+"'><td style='font-size:9px;text-align:center'>"+(i+1)+"</td>";
-    row+="<td style='font-size:9px;padding:3px 4px'>"+p.nombre+"</td>";
+    row+="<td style='font-size:9px;padding:3px 4px;min-width:150px'>"+p.nombre+"</td>";
 
     for(var d=0;d<5;d++){
       var pr=diasProg[d]?diasProg[d].pr:0;
@@ -1767,7 +1767,7 @@ function capturarReporte(){
   var oldMaxW=el.style.maxWidth;
   var oldBR=el.style.borderRadius;
   // Forzar ancho de escritorio para captura consistente en cualquier dispositivo
-  var TARGET_W=720;
+  var TARGET_W=1000;
   var btnsEl=document.querySelector(".rep-btns");
   var oldBtnsDisplay=btnsEl?btnsEl.style.display:"";
   if(btnsEl) btnsEl.style.display="none";
