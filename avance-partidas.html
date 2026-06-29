@@ -1436,8 +1436,20 @@ function guardar(){
     "&acum="+ejAcum;
   fetch(url)
     .then(function(r){return r.json();})
-    .then(function(r){showT(r.ok?"Guardado ✓":"Error al guardar");})
-    .catch(function(){showT("Sin conexión - guardado local");});
+    .then(function(r){
+      if(r.ok){
+        showT(ejAcum===1?"Marcado ✓":"Desmarcado ✓ (sincronizado)");
+      } else {
+        showT("⚠ Error al guardar en Sheets");
+      }
+    })
+    .catch(function(){
+      if(ejAcum===0){
+        showT("⚠ Sin conexión: desmarcado solo local. Presiona Forzar Sync cuando tengas red.");
+      } else {
+        showT("Sin conexión - guardado local");
+      }
+    });
 }
 
 function cm(){ document.getElementById("mo").classList.remove("v"); ca=null; }
@@ -1952,7 +1964,7 @@ document.getElementById("fecha-reg-input").value = fechaRegistro;
 // ── Forzar sincronización completa manual ──
 function forzarSync(){
   showT("Verificando diferencias con Sheets...");
-  fetch(SCRIPT_URL+"?accion=get_all_estado")
+  fetch(SCRIPT_URL+"?accion=get_all_estado&_="+Date.now(),{cache:"no-store"})
     .then(function(r){return r.json();})
     .catch(function(){return null;})
     .then(function(data){
@@ -2066,7 +2078,7 @@ function inicializar(){
   }
 
   // Paso 2: Merge con Sheets
-  fetch(SCRIPT_URL+"?accion=get_all_estado")
+  fetch(SCRIPT_URL+"?accion=get_all_estado&_="+Date.now(),{cache:"no-store"})
     .then(function(r){return r.json();})
     .catch(function(){return null;})
     .then(function(data){
