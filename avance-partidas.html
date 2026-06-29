@@ -2000,6 +2000,7 @@ function inicializar(){
   // Paso 1: Reconstruir claves acumuladas desde claves diarias existentes
   // (recupera datos ingresados antes de tener sync con Sheets)
   var reconstruidos=0;
+  var clavesReconstruidas=[];
   for(var i=0;i<localStorage.length;i++){
     var k=localStorage.key(i);
     if(k && k.indexOf("aphoy_")===0 && localStorage.getItem(k)==="1"){
@@ -2007,6 +2008,7 @@ function inicializar(){
       var sinFecha=sinPrefijo.slice(0,-11);
       if(!localStorage.getItem("ap_"+sinFecha)){
         localStorage.setItem("ap_"+sinFecha,"1");
+        clavesReconstruidas.push("ap_"+sinFecha);
         reconstruidos++;
       }
     }
@@ -2030,6 +2032,8 @@ function inicializar(){
           var d=data.datos[i];
           localStorage.setItem("ap_"+d.partida+"_"+d.mz+"_"+d.lote,"1");
         }
+        // Re-aplicar claves reconstruidas en Paso 1 (aún no están en Sheets)
+        clavesReconstruidas.forEach(function(k){localStorage.setItem(k,"1");});
       }
       // Paso 3: Comparar local vs Sheets — si local tiene más, subir todo
       var localCount=0;
