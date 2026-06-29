@@ -2039,7 +2039,6 @@ function inicializar(){
   showT("Sincronizando datos...");
 
   // Paso 1: Reconstruir claves acumuladas desde claves diarias existentes
-  // (recupera datos ingresados antes de tener sync con Sheets)
   var reconstruidos=0;
   var clavesReconstruidas=[];
   for(var i=0;i<localStorage.length;i++){
@@ -2049,7 +2048,8 @@ function inicializar(){
       var sinFecha=sinPrefijo.slice(0,-11);
       if(!localStorage.getItem("ap_"+sinFecha)){
         localStorage.setItem("ap_"+sinFecha,"1");
-        clavesReconstruidas.push("ap_"+sinFecha);
+        var rParts=sinFecha.split("_");
+        clavesReconstruidas.push({key:"ap_"+sinFecha,pid:rParts[0],mz:rParts[1],l:rParts[2]});
         reconstruidos++;
       }
     }
@@ -2061,7 +2061,6 @@ function inicializar(){
     .catch(function(){return null;})
     .then(function(data){
       if(data && data.ok){
-        // Construir set de claves que vienen de Sheets
         var sheetsSet={};
         for(var i=0;i<data.datos.length;i++){
           var d=data.datos[i];
@@ -2069,9 +2068,7 @@ function inicializar(){
           sheetsSet[sk]=true;
           localStorage.setItem(sk,"1");
         }
-        // También proteger claves reconstruidas en Paso 1
-        for(var i=0;i<clavesReconstruidas.length;i++) sheetsSet[clavesReconstruidas[i]]=true;
-        // Eliminar ap_* que NO están en Sheets NI reconstruidas (son borrados del otro dispositivo)
+        for(var i=0;i<clavesReconstruidas.length;i++) sheetsSet[clavesReconstruidas[i].key]=true;
         var toRemove=[];
         for(var i=0;i<localStorage.length;i++){
           var k=localStorage.key(i);
@@ -2079,19 +2076,23 @@ function inicializar(){
         }
         toRemove.forEach(function(k){localStorage.removeItem(k);});
       }
-      // Paso 3: Comparar local vs Sheets — si local tiene más, subir todo
-      var localCount=0;
-      for(var i=0;i<localStorage.length;i++){
-        var k=localStorage.key(i);
-        if(k && k.indexOf("ap_")===0 && k.indexOf("aphoy_")===-1 && localStorage.getItem(k)==="1") localCount++;
-      }
-      var sheetsCount=(data && data.ok)?data.datos.length:0;
-      if(localCount>sheetsCount || reconstruidos>0){
-        showT("Subiendo datos a Sheets ("+localCount+" lotes)...");
-        subirTodoASheets(function(){
-          showT("Sincronizado ✓ ("+localCount+" lotes)");
-          setTimeout(function(){showT("");},3000);
-        });
+      // Paso 3: Subir SOLO claves reconstruidas via set_lote (NUNCA set_todo_estado)
+      if(reconstruidos>0){
+        showT("Subiendo "+reconstruidos+" lotes recuperados...");
+        var bIdx2=0,batches2=[];
+        for(var i=0;i<clavesReconstruidas.length;i+=8) batches2.push(clavesReconstruidas.slice(i,i+8));
+        function nextBatch2(){
+          if(bIdx2>=batches2.length){
+            showT("Sincronizado ✓");
+            setTimeout(function(){showT("");},3000);
+            return;
+          }
+          var b=batches2[bIdx2++];
+          Promise.all(b.map(function(item){
+            return fetch(SCRIPT_URL+"?accion=set_lote&partida="+encodeURIComponent(item.pid)+"&mz="+encodeURIComponent(item.mz)+"&lote="+encodeURIComponent(item.l)+"&fecha="+fechaRegistro+"&ej=0&acum=1").catch(function(){return null;});
+          })).then(function(){nextBatch2();});
+        }
+        nextBatch2();
       } else {
         showT("Sincronizado ✓");
         setTimeout(function(){showT("");},2000);
