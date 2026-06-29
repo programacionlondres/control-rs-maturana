@@ -13,7 +13,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 .header{background:#002060;padding:.75rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;position:sticky;top:0;z-index:20}
 .titulo{font-size:14px;font-weight:600;color:#fff}
 .subtitulo{font-size:10px;color:#aac4ff}
-.header-btns{display:flex;gap:5px}
+.header-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.fab-sel{position:fixed;bottom:22px;right:16px;width:52px;height:52px;border-radius:50%;background:#1565C0;color:#fff;font-size:22px;border:none;cursor:pointer;box-shadow:0 3px 14px rgba(0,0,0,.35);z-index:150;display:none;align-items:center;justify-content:center;font-weight:700}
+.fab-sel.v{display:flex}
 .bh{font-size:11px;padding:5px 10px;border-radius:7px;border:none;cursor:pointer;font-weight:600}
 .bh-admin{background:#FFD700;color:#002060}
 .bh-img{background:#92D050;color:#1a3a00}
@@ -154,7 +156,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
     <button class="bh bh-rep" onclick="abrirReporte()">Reporte</button>
     <button class="bh" style="background:#156082;color:#fff" onclick="abrirHistorico()">Historial</button>
     <button class="bh" style="background:#156082;color:#fff" onclick="forzarSync()">⟳ Sync</button>
-    <button class="bh" id="btn-sel-modo" style="background:#1565C0;color:#fff" onclick="activarModoSeleccion()">☑ Seleccionar</button>
     <button class="bh" style="background:#FF6B6B;color:#fff" onclick="cerrarDia()">Cerrar dia</button>
     <button class="bh bh-img" onclick="capturar()">Imagen</button>
   </div>
@@ -1169,6 +1170,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
   </g>
 </svg>
 </div>
+<button class="fab-sel" id="fab-sel" onclick="activarModoSeleccion()" title="Seleccionar casas">☑</button>
 <div class="selbar" id="selbar">
   <div class="selbar-info" id="selbar-info">0 casas seleccionadas</div>
   <div class="selbar-btns">
@@ -1498,6 +1500,7 @@ function vp(){
     if(v===PIN){
       admin=true;
       document.getElementById("ab").classList.add("v");
+      document.getElementById("fab-sel").style.display="flex";
       cp();
       if(pc){clickLote(pc.mz,pc.l);pc=null;}
       showT("Admin activado");
@@ -2099,9 +2102,7 @@ function activarModoSeleccion(){
   if(!admin){openPin();return;}
   modoSeleccion=true;
   lotesSeleccionados=[];
-  document.getElementById("btn-sel-modo").style.background="#E53935";
-  document.getElementById("btn-sel-modo").textContent="✕ Cancelar sel.";
-  document.getElementById("btn-sel-modo").onclick=cancelarSeleccion;
+  document.getElementById("fab-sel").style.display="none";
   document.getElementById("selbar").classList.add("v");
   actualizarBarraSeleccion();
   renderManzanas();
@@ -2112,9 +2113,7 @@ function cancelarSeleccion(){
   modoSeleccion=false;
   lotesSeleccionados=[];
   document.getElementById("selbar").classList.remove("v");
-  document.getElementById("btn-sel-modo").style.background="#1565C0";
-  document.getElementById("btn-sel-modo").textContent="☑ Seleccionar";
-  document.getElementById("btn-sel-modo").onclick=activarModoSeleccion;
+  if(admin) document.getElementById("fab-sel").style.display="flex";
   renderManzanas();
   updateSVG();
 }
