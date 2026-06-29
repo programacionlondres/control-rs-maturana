@@ -56,6 +56,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 .c:hover{transform:scale(1.15);z-index:2;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .c.ej{background:#92D050;border-color:#375623;color:#1a3a00}
 .c.oculta{opacity:.08;pointer-events:none}
+.c.sel-lote{outline:3px solid #1565C0!important;background:#BBDEFB!important;color:#0D47A1!important;font-weight:700}
+.c.ej.sel-lote{outline:3px solid #1565C0!important;background:#64B5F6!important;color:#0D47A1!important}
+.mz-sel-btn{font-size:11px;padding:3px 8px;border-radius:6px;border:1.5px solid #1565C0;background:#E3F2FD;color:#1565C0;cursor:pointer;font-weight:600;margin-left:8px}
+.mz-sel-btn.todo{background:#1565C0;color:#fff}
+.selbar{position:fixed;bottom:0;left:0;right:0;background:#1A1846;color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;z-index:200;transform:translateY(100%);transition:transform .25s ease;box-shadow:0 -2px 12px rgba(0,0,0,.3)}
+.selbar.v{transform:translateY(0)}
+.selbar-info{font-size:13px;font-weight:600}
+.selbar-btns{display:flex;gap:8px}
+.selbar-btns button{font-size:12px;padding:8px 14px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+.btn-sel-ej{background:#92D050;color:#1a3a00}
+.btn-sel-cancel{background:rgba(255,255,255,.15);color:#fff}
 
 /* Modal ingreso */
 .mo{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:100}
@@ -143,6 +154,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
     <button class="bh bh-rep" onclick="abrirReporte()">Reporte</button>
     <button class="bh" style="background:#156082;color:#fff" onclick="abrirHistorico()">Historial</button>
     <button class="bh" style="background:#156082;color:#fff" onclick="forzarSync()">⟳ Sync</button>
+    <button class="bh" id="btn-sel-modo" style="background:#1565C0;color:#fff" onclick="activarModoSeleccion()">☑ Seleccionar</button>
     <button class="bh" style="background:#FF6B6B;color:#fff" onclick="cerrarDia()">Cerrar dia</button>
     <button class="bh bh-img" onclick="capturar()">Imagen</button>
   </div>
@@ -194,6 +206,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
       .green { fill: rgb(0,175,80); }
       .lot { fill: #fff; stroke: #000; stroke-width: 1; }
       .lot-ej { fill: #92D050; stroke: #375623; stroke-width: 1.5; }
+      .lot-sel { fill: #BBDEFB; stroke: #1565C0; stroke-width: 2.5; }
+      .lot-ej-sel { fill: #64B5F6; stroke: #1565C0; stroke-width: 2.5; }
       .lotline { stroke: #000; stroke-width: 1; fill: none; }
       .header { fill: rgb(46,117,182); stroke: #000; stroke-width: 1; }
       .cap { fill: #fff; stroke: #000; stroke-width: 1; }
@@ -1155,6 +1169,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
   </g>
 </svg>
 </div>
+<div class="selbar" id="selbar">
+  <div class="selbar-info" id="selbar-info">0 casas seleccionadas</div>
+  <div class="selbar-btns">
+    <button class="btn-sel-ej" onclick="marcarSeleccionados()">✓ Marcar ejecutadas</button>
+    <button class="btn-sel-cancel" onclick="cancelarSeleccion()">Cancelar</button>
+  </div>
+</div>
 <div class="manzanas" id="manzanas"></div>
 <div class="mo" id="mo" onclick="if(event.target===this)cm()">
   <div class="md">
@@ -1214,6 +1235,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background
 </div>
 <script>
 var PIN="0525",admin=false,ca=null,optSel="nd",pc=null;
+var modoSeleccion=false,lotesSeleccionados=[];
 var SCRIPT_URL="https://script.google.com/macros/s/AKfycbywnhNSWOc3zVH0YJwa2xE-gMAdQZtNOM3bAjF5dCshrfsewdHj7_1I58BMvkTw0RGj7w/exec";
 var partidaActual="P01";
 var PARTIDAS = [
@@ -1339,7 +1361,9 @@ function updateSVG(){
       var el=document.getElementById("mz"+mz.id.toLowerCase()+"-vivienda-"+num);
       if(el){
         var rect=el.querySelector("rect")||el.querySelector("path.lot")||el.querySelector("path.lot-ej");
-        if(rect) rect.className.baseVal=getEj(partidaActual,mz.id,l)?"lot lot-ej":"lot";
+        var esSel=lotesSeleccionados.some(function(x){return x.mz===mz.id&&x.l===l;});
+        var esEj=getEj(partidaActual,mz.id,l);
+        if(rect) rect.className.baseVal=esSel?(esEj?"lot lot-ej-sel":"lot lot-sel"):(esEj?"lot lot-ej":"lot");
         el.style.cursor="pointer";
         (function(mzid,lot){
           el.onclick=function(e){e.stopPropagation();clickLote(mzid,lot);};
@@ -1360,7 +1384,8 @@ function renderManzanas(){
     var pct=Math.round(ej/tot*100);
     var blq=document.createElement("div");
     blq.className="mz-bloque";
-    blq.innerHTML="<div class='mz-header'><div class='mz-nombre'>"+mz.nombre+" <span style='font-weight:400;color:#aaa'>("+tot+")</span></div>"+
+    var selBtnTxt=modoSeleccion?"<button class='mz-sel-btn' id='mzsbtn-"+mz.id+"' onclick='seleccionarManzana(\""+mz.id+"\")'>Sel. todo</button>":"";
+    blq.innerHTML="<div class='mz-header'><div class='mz-nombre'>"+mz.nombre+" <span style='font-weight:400;color:#aaa'>("+tot+")</span>"+selBtnTxt+"</div>"+
       "<div class='mz-stats'><span>"+ej+"</span> / "+tot+" ("+pct+"%)</div></div>"+
       "<div class='lotes-grid' id='grid-"+mz.id+"'></div>";
     cont.appendChild(blq);
@@ -1370,8 +1395,9 @@ function renderManzanas(){
       var ejs=getEj(partidaActual,mz.id,l);
       var ejh=getEjHoy(partidaActual,mz.id,l);
       var d=document.createElement("div");
-      d.className="c"+(ejs?" ej":"");
-      if(ejh&&ejs) d.style.outline="2px solid #FF8C00";
+      var esSel=lotesSeleccionados.some(function(x){return x.mz===mz.id&&x.l===l;});
+      d.className="c"+(ejs?" ej":"")+(esSel?" sel-lote":"");
+      if(ejh&&ejs&&!esSel) d.style.outline="2px solid #FF8C00";
       d.dataset.mz=mz.id; d.dataset.l=l;
       d.textContent=l;
       d.addEventListener("click",(function(mzid,lot){return function(){clickLote(mzid,lot);};})(mz.id,l));
@@ -1382,6 +1408,7 @@ function renderManzanas(){
 
 function clickLote(mz,l){
   if(!admin){pc={mz:mz,l:l};openPin();return;}
+  if(modoSeleccion){toggleSeleccion(mz,l);return;}
   ca={mz:mz,l:l};
   var ejs=getEj(partidaActual,mz,l);
   optSel=ejs?"ej":"nd";
@@ -2060,6 +2087,124 @@ function subirTodoASheets(onDone){
 }
 
 // ── Inicialización: cargar estado completo desde Sheets ──
+// ── Selección múltiple ──
+function activarModoSeleccion(){
+  if(!admin){openPin();return;}
+  modoSeleccion=true;
+  lotesSeleccionados=[];
+  document.getElementById("btn-sel-modo").style.background="#E53935";
+  document.getElementById("btn-sel-modo").textContent="✕ Cancelar sel.";
+  document.getElementById("btn-sel-modo").onclick=cancelarSeleccion;
+  document.getElementById("selbar").classList.add("v");
+  actualizarBarraSeleccion();
+  renderManzanas();
+  updateSVG();
+}
+
+function cancelarSeleccion(){
+  modoSeleccion=false;
+  lotesSeleccionados=[];
+  document.getElementById("selbar").classList.remove("v");
+  document.getElementById("btn-sel-modo").style.background="#1565C0";
+  document.getElementById("btn-sel-modo").textContent="☑ Seleccionar";
+  document.getElementById("btn-sel-modo").onclick=activarModoSeleccion;
+  renderManzanas();
+  updateSVG();
+}
+
+function toggleSeleccion(mz,l){
+  var idx=lotesSeleccionados.findIndex(function(x){return x.mz===mz&&x.l===l;});
+  if(idx>=0) lotesSeleccionados.splice(idx,1);
+  else lotesSeleccionados.push({mz:mz,l:l});
+  actualizarBarraSeleccion();
+  // Actualizar visual del lote en la grilla
+  var d=document.querySelector(".lotes-grid#grid-"+mz+" .c[data-mz='"+mz+"'][data-l='"+l+"']");
+  if(!d){
+    var grid=document.getElementById("grid-"+mz);
+    if(grid) d=Array.from(grid.querySelectorAll(".c")).find(function(el){return el.dataset.l==l;});
+  }
+  if(d){
+    var esSel=lotesSeleccionados.some(function(x){return x.mz===mz&&x.l===l;});
+    if(esSel) d.classList.add("sel-lote");
+    else d.classList.remove("sel-lote");
+  }
+  // Actualizar SVG
+  var num=String(l).padStart(2,"0");
+  var el=document.getElementById("mz"+mz.toLowerCase()+"-vivienda-"+num);
+  if(el){
+    var rect=el.querySelector("rect")||el.querySelector("path.lot")||el.querySelector("path.lot-ej")||el.querySelector("path.lot-sel")||el.querySelector("path.lot-ej-sel");
+    if(rect){
+      var esEj=getEj(partidaActual,mz,l);
+      var esSel2=lotesSeleccionados.some(function(x){return x.mz===mz&&x.l===l;});
+      rect.className.baseVal=esSel2?(esEj?"lot lot-ej-sel":"lot lot-sel"):(esEj?"lot lot-ej":"lot");
+    }
+  }
+}
+
+function actualizarBarraSeleccion(){
+  var n=lotesSeleccionados.length;
+  document.getElementById("selbar-info").textContent=n===0?"Toca casas para seleccionar":n+" casa"+(n!==1?"s":"")+" seleccionada"+(n!==1?"s":"");
+  document.querySelector(".btn-sel-ej").disabled=n===0;
+  document.querySelector(".btn-sel-ej").style.opacity=n===0?"0.4":"1";
+}
+
+function seleccionarManzana(mzId){
+  var mz=MANZANAS.find(function(m){return m.id===mzId;});
+  if(!mz) return;
+  var todasSel=mz.lotes.every(function(l){return lotesSeleccionados.some(function(x){return x.mz===mzId&&x.l===l;});});
+  if(todasSel){
+    lotesSeleccionados=lotesSeleccionados.filter(function(x){return x.mz!==mzId;});
+  } else {
+    mz.lotes.forEach(function(l){
+      if(!lotesSeleccionados.some(function(x){return x.mz===mzId&&x.l===l;}))
+        lotesSeleccionados.push({mz:mzId,l:l});
+    });
+  }
+  actualizarBarraSeleccion();
+  renderManzanas();
+  updateSVG();
+}
+
+function marcarSeleccionados(){
+  if(lotesSeleccionados.length===0) return;
+  var total=lotesSeleccionados.length;
+  showT("Guardando "+total+" casas...");
+  // Actualizar localStorage
+  var hoy=fechaRegistro;
+  lotesSeleccionados.forEach(function(item){
+    setEj(partidaActual,item.mz,item.l,true);
+    setEjHoy(partidaActual,item.mz,item.l,true);
+  });
+  renderKPIs();
+  updateSVG();
+  renderManzanas();
+  // Subir a Sheets en lotes de 8
+  var lista=lotesSeleccionados.slice();
+  cancelarSeleccion();
+  var idx=0,batches=[];
+  for(var i=0;i<lista.length;i+=8) batches.push(lista.slice(i,i+8));
+  var errores=0;
+  function nextBatch(){
+    if(idx>=batches.length){
+      if(errores>0) showT("⚠ "+errores+" casas no se guardaron en Sheets. Presiona ⟳ Sync.");
+      else showT("✓ "+total+" casas marcadas como ejecutadas");
+      setTimeout(function(){showT("");},3000);
+      return;
+    }
+    var b=batches[idx++];
+    Promise.all(b.map(function(item){
+      var url=SCRIPT_URL+"?accion=set_lote"+
+        "&partida="+encodeURIComponent(partidaActual)+
+        "&mz="+encodeURIComponent(item.mz)+
+        "&lote="+encodeURIComponent(item.l)+
+        "&fecha="+encodeURIComponent(hoy)+
+        "&ej=1&acum=1";
+      return fetch(url).then(function(r){return r.json();}).catch(function(){errores++;return null;});
+    })).then(function(){nextBatch();});
+  }
+  nextBatch();
+}
+
 function inicializar(){
   showT("Sincronizando datos...");
 
