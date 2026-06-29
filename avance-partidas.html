@@ -1404,14 +1404,17 @@ function actualizarOpts(){
 
 function guardar(){
   if(!ca) return;
-  var antes=getEj(partidaActual,ca.mz,ca.l);
+  // Capturar mz y lote antes de que cm() ponga ca=null
+  var mzG=ca.mz;
+  var loteG=ca.l;
+  var antes=getEj(partidaActual,mzG,loteG);
   var nuevo=optSel==="ej";
-  setEj(partidaActual,ca.mz,ca.l,nuevo);
-  if(nuevo&&!antes) setEjHoy(partidaActual,ca.mz,ca.l,true);
+  setEj(partidaActual,mzG,loteG,nuevo);
+  if(nuevo&&!antes) setEjHoy(partidaActual,mzG,loteG,true);
   else if(!nuevo){
     // Borrar TODAS las claves aphoy_ de este lote (no solo la de hoy)
     // para que al recargar no se reconstituya como marcado
-    var prefixAphoy="aphoy_"+partidaActual+"_"+ca.mz+"_"+ca.l+"_";
+    var prefixAphoy="aphoy_"+partidaActual+"_"+mzG+"_"+loteG+"_";
     var aphoyKeys=[];
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
@@ -1426,11 +1429,11 @@ function guardar(){
   showT("Guardando...");
   // Sincronizar con Sheets en tiempo real
   var ejAcum=nuevo?1:0;
-  var ejDiario=getEjHoy(partidaActual,ca.mz,ca.l)?1:0;
+  var ejDiario=getEjHoy(partidaActual,mzG,loteG)?1:0;
   var url=SCRIPT_URL+"?accion=set_lote"+
     "&partida="+encodeURIComponent(partidaActual)+
-    "&mz="+encodeURIComponent(ca.mz)+
-    "&lote="+encodeURIComponent(ca.l)+
+    "&mz="+encodeURIComponent(mzG)+
+    "&lote="+encodeURIComponent(loteG)+
     "&fecha="+encodeURIComponent(fechaRegistro)+
     "&ej="+ejDiario+
     "&acum="+ejAcum;
