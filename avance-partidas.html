@@ -1408,7 +1408,17 @@ function guardar(){
   var nuevo=optSel==="ej";
   setEj(partidaActual,ca.mz,ca.l,nuevo);
   if(nuevo&&!antes) setEjHoy(partidaActual,ca.mz,ca.l,true);
-  else if(!nuevo) setEjHoy(partidaActual,ca.mz,ca.l,false);
+  else if(!nuevo){
+    // Borrar TODAS las claves aphoy_ de este lote (no solo la de hoy)
+    // para que al recargar no se reconstituya como marcado
+    var prefixAphoy="aphoy_"+partidaActual+"_"+ca.mz+"_"+ca.l+"_";
+    var aphoyKeys=[];
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      if(k && k.indexOf(prefixAphoy)===0) aphoyKeys.push(k);
+    }
+    aphoyKeys.forEach(function(k){localStorage.removeItem(k);});
+  }
   cm();
   renderKPIs();
   updateSVG();
@@ -2068,7 +2078,7 @@ function inicializar(){
           sheetsSet[sk]=true;
           localStorage.setItem(sk,"1");
         }
-        for(var i=0;i<clavesReconstruidas.length;i++) sheetsSet[clavesReconstruidas[i].key]=true;
+        // NO proteger reconstruidas: si Sheets dice que no está, Sheets gana
         var toRemove=[];
         for(var i=0;i<localStorage.length;i++){
           var k=localStorage.key(i);
@@ -2076,11 +2086,12 @@ function inicializar(){
         }
         toRemove.forEach(function(k){localStorage.removeItem(k);});
       }
-      // Paso 3: Subir SOLO claves reconstruidas via set_lote (NUNCA set_todo_estado)
-      if(reconstruidos>0){
-        showT("Subiendo "+reconstruidos+" lotes recuperados...");
+      // Paso 3: Subir solo reconstruidas que siguen en localStorage (offline marks no en Sheets)
+      var paraSubir=clavesReconstruidas.filter(function(item){return localStorage.getItem(item.key)==="1";});
+      if(paraSubir.length>0){
+        showT("Subiendo "+paraSubir.length+" lotes recuperados...");
         var bIdx2=0,batches2=[];
-        for(var i=0;i<clavesReconstruidas.length;i+=8) batches2.push(clavesReconstruidas.slice(i,i+8));
+        for(var i=0;i<paraSubir.length;i+=8) batches2.push(paraSubir.slice(i,i+8));
         function nextBatch2(){
           if(bIdx2>=batches2.length){
             showT("Sincronizado ✓");
