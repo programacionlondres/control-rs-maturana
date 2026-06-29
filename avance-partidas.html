@@ -1941,11 +1941,52 @@ document.getElementById("fecha-reg-input").value = fechaRegistro;
 
 // ── Forzar sincronización completa manual ──
 function forzarSync(){
-  showT("Subiendo todo a Sheets...");
-  subirTodoASheets(function(){
-    showT("✓ Listo — recarga en el otro dispositivo");
-    setTimeout(function(){showT("");},4000);
-  });
+  showT("Verificando diferencias con Sheets...");
+  fetch(SCRIPT_URL+"?accion=get_all_estado")
+    .then(function(r){return r.json();})
+    .catch(function(){return null;})
+    .then(function(data){
+      if(!data||!data.ok){showT("Sin conexión con Sheets");return;}
+      // Construir set de lo que ya está en Sheets
+      var enSheets={};
+      for(var i=0;i<data.datos.length;i++){
+        var d=data.datos[i];
+        enSheets["ap_"+d.partida+"_"+d.mz+"_"+d.lote]=true;
+      }
+      // Solo subir lo que está local pero NO en Sheets
+      var falta=[];
+      for(var k=0;k<PARTIDAS.length;k++){
+        var pid=PARTIDAS[k].id;
+        for(var i=0;i<MANZANAS.length;i++){
+          var mz=MANZANAS[i];
+          for(var j=0;j<mz.lotes.length;j++){
+            if(getEj(pid,mz.id,mz.lotes[j])&&!enSheets["ap_"+pid+"_"+mz.id+"_"+mz.lotes[j]]){
+              falta.push({pid:pid,mz:mz.id,l:mz.lotes[j]});
+            }
+          }
+        }
+      }
+      if(falta.length===0){
+        showT("✓ Todo sincronizado — recarga en el otro dispositivo");
+        setTimeout(function(){showT("");},4000);
+        return;
+      }
+      showT("Subiendo "+falta.length+" lotes faltantes...");
+      var BATCH=8,bIdx=0,batches=[];
+      for(var i=0;i<falta.length;i+=BATCH) batches.push(falta.slice(i,i+BATCH));
+      function nextBatch(){
+        if(bIdx>=batches.length){
+          showT("✓ Listo ("+falta.length+") — recarga en el otro dispositivo");
+          setTimeout(function(){showT("");},4000);
+          return;
+        }
+        var b=batches[bIdx++];
+        Promise.all(b.map(function(item){
+          return fetch(SCRIPT_URL+"?accion=set_lote&partida="+encodeURIComponent(item.pid)+"&mz="+encodeURIComponent(item.mz)+"&lote="+encodeURIComponent(item.l)+"&fecha="+fechaRegistro+"&ej=0&acum=1").catch(function(){return null;});
+        })).then(function(){nextBatch();});
+      }
+      nextBatch();
+    });
 }
 
 // ── Subir TODO el estado en UN SOLO request (rápido sin importar cuántos lotes) ──
