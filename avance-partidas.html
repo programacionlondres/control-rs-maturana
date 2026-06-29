@@ -2084,7 +2084,17 @@ function inicializar(){
           var k=localStorage.key(i);
           if(k && k.indexOf("ap_")===0 && k.indexOf("aphoy_")===-1 && !sheetsSet[k]) toRemove.push(k);
         }
-        toRemove.forEach(function(k){localStorage.removeItem(k);});
+        toRemove.forEach(function(k){
+          localStorage.removeItem(k);
+          // Borrar también todas las aphoy_ del lote para que Paso 1 no lo reconstruya en la próxima recarga
+          var loteId=k.slice(3); // quita "ap_" → "partida_mz_lote"
+          var aphoyKeys=[];
+          for(var j=0;j<localStorage.length;j++){
+            var ak=localStorage.key(j);
+            if(ak && ak.indexOf("aphoy_"+loteId+"_")===0) aphoyKeys.push(ak);
+          }
+          aphoyKeys.forEach(function(ak){localStorage.removeItem(ak);});
+        });
       }
       // Paso 3: Subir solo reconstruidas que siguen en localStorage (offline marks no en Sheets)
       var paraSubir=clavesReconstruidas.filter(function(item){return localStorage.getItem(item.key)==="1";});
