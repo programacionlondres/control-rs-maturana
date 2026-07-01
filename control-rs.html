@@ -1412,6 +1412,7 @@ function updateSVG(){
           else if(cf2) lotCls+=" lot-"+cf2;
           rect.className.baseVal=lotCls;
         }
+        svgEl.style.opacity=dv(h,fa)?"1":"0.08";
       }
     }
   }
@@ -1489,6 +1490,7 @@ function filtrar(f){
   document.querySelectorAll(".c").forEach(function(c){
     c.classList.toggle("oculta",!dv(gH(c.dataset.mz,Number(c.dataset.l)),f));
   });
+  updateSVG();
 }
 
 function click(mz,l){if(!admin){pc={mz:mz,l:l};openPin();return;}openModal(mz,l);}
@@ -1779,6 +1781,14 @@ cargarDatosIniciales();
 renderRes();
 renderManzanas();
 updateSVG();
+(function(){
+  document.querySelectorAll(".vivienda-ref").forEach(function(g){
+    var mzId=g.getAttribute("data-manzana").replace("MZ.","");
+    var l=Number(g.getAttribute("data-vivienda"));
+    g.style.cursor="pointer";
+    g.addEventListener("click",function(){click(mzId,l);});
+  });
+})();
 
 function abrirInformeSemanal(){
   var hoy=new Date();
