@@ -86,6 +86,18 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
 @media(min-width:480px){.mr-sem{align-items:center}}
 .mrd-sem{background:#fff;border-radius:16px 16px 0 0;padding:1.25rem;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
 @media(min-width:480px){.mrd-sem{border-radius:12px}}
+.mo-tip{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:200}
+.mo-tip.v{display:flex}
+.md-tip{background:#fff;border-radius:12px;padding:1.25rem;width:calc(100% - 2rem);max-width:520px;max-height:90vh;overflow-y:auto}
+.md-tip h3{font-size:14px;font-weight:600;margin-bottom:.75rem;color:#002060}
+.tip-table{width:100%;border-collapse:collapse;font-size:11px;margin-top:.5rem}
+.tip-table th{background:#1A1846;color:#fff;padding:6px 5px;text-align:center;font-weight:600;white-space:nowrap}
+.tip-table th:first-child{text-align:left;padding-left:8px}
+.tip-table td{padding:5px 5px;text-align:center;border-bottom:1px solid #eee}
+.tip-table td:first-child{text-align:left;font-weight:600;padding-left:8px}
+.tip-table tr.tip-tot td{font-weight:700;background:#f0f0ec;border-top:2px solid #ccc}
+.tip-table .zero{color:#ccc}
+.tip-close{width:100%;margin-top:1rem;padding:9px;border-radius:8px;border:none;background:#1a1a1a;color:#fff;font-size:13px;cursor:pointer;font-weight:500}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
@@ -114,6 +126,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
   <button class="fb" id="f-r1" onclick="filtrar('r1')">&ge; R1</button>
   <button class="fb" id="f-rf" onclick="filtrar('rf')">RF</button>
   <button class="fb" id="f-nd" onclick="filtrar('nd')">Sin inicio</button>
+  <button class="fb" style="background:#1A1846;color:#fff;border-color:#1A1846;margin-left:4px" onclick="mostrarTipologia()">&#9638; Tipología</button>
 </div>
 <div class="ley">
   <div class="li"><div class="lc" style="background:#f8f8f5;border-color:#ccc"></div>Sin inicio</div>
@@ -1356,6 +1369,37 @@ var FECHAS_R0 = {
   "K-7": "2026-06-09",
 };
 
+var TIPOLOGIAS={
+  "A":{1:"vul",2:"vul",3:"sm1",4:"sm1",5:"vul",6:"vul",7:"sm1",8:"sm1",9:"vul",10:"vul",
+       11:"emer",12:"emer",13:"vul",14:"vul",15:"emer",16:"emer",17:"sm1",18:"sm1",
+       19:"vul",20:"vul",21:"emer",22:"emer",23:"vul",24:"vul",25:"emer",26:"emer",
+       27:"sm2",28:"sm1",29:"emer",30:"emer",31:"sm1",32:"sm1"},
+  "B":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
+       11:"sm1",12:"sm1",13:"sm1",14:"sm1",15:"emer",16:"emer",17:"vul",18:"vul",
+       19:"sm1",20:"sm1",21:"sm1",22:"sm1",23:"sm1",24:"sm1"},
+  "C":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
+       11:"sm1",12:"sm1",13:"emer",14:"emer",15:"vul",16:"vul",17:"sm1",18:"sm1",
+       19:"sm1",20:"sm1"},
+  "D":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
+       11:"sm1",12:"sm1",13:"sm1",14:"vul",15:"vul",16:"sm1",17:"sm1",18:"sm1"},
+  "E":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1"},
+  "F":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
+       11:"emer",12:"emer",13:"vul",14:"vul",15:"sm1",16:"sm1",17:"sm1",18:"sm1",
+       19:"sm1",20:"sm1",21:"vul",22:"vul",23:"sm1",24:"sm1",25:"emer",26:"emer",
+       27:"sm1",28:"sm1",29:"vul",30:"vul",31:"emer",32:"emer",33:"sm1",34:"sm1",
+       35:"sm1",36:"sm1"},
+  "G":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"emer",6:"emer",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
+       11:"vul",12:"vul",13:"sm1",14:"sm1",15:"sm1",16:"sm1",17:"vul",18:"vul",
+       19:"sm1",20:"sm1",21:"vul",22:"vul",23:"sm1",24:"sm1",25:"emer",26:"vul",
+       27:"sm1",28:"sm1"},
+  "H":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
+       11:"vul",12:"vul",13:"sm1",14:"sm1"},
+  "J":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
+       11:"sm1",12:"sm1",13:"sm1",14:"sm1",15:"sm1",16:"sm1",17:"emer",18:"emer",
+       19:"vul",20:"vul",21:"emer",22:"emer",23:"vul",24:"vul",25:"sm1",26:"sm1"},
+  "K":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"mov",6:"sm1",7:"sm1"}
+};
+
 var MANZANAS=[
   {id:"F",nombre:"Manzana F",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,19]},
   {id:"G",nombre:"Manzana G",lotes:[1,2,3,4,5,6,7,8,9,10,11,12,13,14,28,27,26,25,24,23,22,21,20,19,18,17,16,15]},
@@ -1851,6 +1895,56 @@ function cerrarDiaRs(){
   .then(function(r){showT(r.ok?"Día cerrado ✓ ("+r.manzanas+" manzanas)":"Error: "+(r.error||""));})
   .catch(function(){showT("No se pudo conectar");});
 }
+
+function mostrarTipologia(){
+  var tipos=["sm1","sm2","vul","emer","mov"];
+  var tLbl={sm1:"SM1",sm2:"SM2",vul:"Vulnerable",emer:"Emergente",mov:"Mov.Red."};
+  var estados=["nd","sg","r0","r0obs","r1","rf"];
+  var eLbl={nd:"S/I",sg:"SG",r0:"R0",r0obs:"R0+O",r1:"R1",rf:"RF"};
+  var cnt={};
+  tipos.forEach(function(t){cnt[t]={};estados.forEach(function(e){cnt[t][e]=0;});});
+  for(var i=0;i<MANZANAS.length;i++){
+    var mz=MANZANAS[i];
+    for(var j=0;j<mz.lotes.length;j++){
+      var l=mz.lotes[j];
+      var tip=(TIPOLOGIAS[mz.id]&&TIPOLOGIAS[mz.id][l])||"sm1";
+      var h=gH(mz.id,l);
+      var est=uH(h)||"nd";
+      cnt[tip][est]++;
+    }
+  }
+  var html='<table class="tip-table"><thead><tr><th>Tipología</th>';
+  estados.forEach(function(e){html+='<th>'+eLbl[e]+'</th>';});
+  html+='<th>Total</th></tr></thead><tbody>';
+  tipos.forEach(function(t){
+    var tot=0;estados.forEach(function(e){tot+=cnt[t][e];});
+    if(tot===0)return;
+    html+='<tr><td>'+tLbl[t]+'</td>';
+    estados.forEach(function(e){
+      var v=cnt[t][e];
+      html+='<td class="'+(v===0?'zero':'')+'">'+( v===0?'–':v)+'</td>';
+    });
+    html+='<td><strong>'+tot+'</strong></td></tr>';
+  });
+  html+='</tbody><tfoot><tr class="tip-tot"><td>Total</td>';
+  var grand=0;
+  estados.forEach(function(e){
+    var colT=0;tipos.forEach(function(t){colT+=(cnt[t][e]||0);});
+    grand+=colT;html+='<td>'+colT+'</td>';
+  });
+  html+='<td>'+grand+'</td></tr></tfoot></table>';
+  document.getElementById("tip-content").innerHTML=html;
+  document.getElementById("mo-tip").classList.add("v");
+}
+function cerrarTipologia(){document.getElementById("mo-tip").classList.remove("v");}
 </script>
+<div class="mo-tip" id="mo-tip" onclick="if(event.target===this)cerrarTipologia()">
+  <div class="md-tip">
+    <h3>Detalle por Tipología</h3>
+    <p style="font-size:11px;color:#888;margin-bottom:.5rem">Estado actual más avanzado por vivienda</p>
+    <div id="tip-content"></div>
+    <button class="tip-close" onclick="cerrarTipologia()">Cerrar</button>
+  </div>
+</div>
 </body>
 </html>
