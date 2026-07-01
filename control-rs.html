@@ -1407,8 +1407,9 @@ function updateSVG(){
         var rect=svgEl.querySelector("rect");
         if(rect){
           var cf2=colorFecha(mz.id,l,h);
+          var displayU=(fa!=="todos"&&fa!=="si")?fa:u;
           var lotCls="lot";
-          if(u) lotCls+=" lot-"+u;
+          if(displayU) lotCls+=" lot-"+displayU;
           else if(cf2) lotCls+=" lot-"+cf2;
           rect.className.baseVal=lotCls;
         }
