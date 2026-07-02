@@ -110,6 +110,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
     <button class="bh" onclick="openPin()">Admin</button>
     <button class="bh" onclick="exportar()">Exportar</button>
     <button class="bh" style="background:#E18426;color:#fff;font-weight:600" onclick="abrirInformeSemanal()">Informe</button>
+    <button class="bh" id="btn-sync" style="background:#27AE60;color:#fff;font-weight:600" onclick="sincronizarRS()">⟳ Sync</button>
     <button class="bh" style="background:#FF6B6B;color:#fff;font-weight:600" onclick="cerrarDiaRs()">Cerrar dia</button>
     <button class="bh" onclick="capturar()" id="btn-cap">Imagen</button>
   </div>
@@ -1623,6 +1624,7 @@ function tog(e){
 function gh(){
   if(!ca)return;
   sH(ca.mz,ca.l,ht);
+  sincronizarLoteRS(ca.mz,ca.l,ht);
   cm();
   renderRes();
   renderManzanas();
@@ -1880,6 +1882,7 @@ cargarDatosIniciales();
 renderRes();
 renderManzanas();
 updateSVG();
+inicializarRS();
 (function(){
   document.querySelectorAll(".vivienda-ref").forEach(function(g){
     var mzId=g.getAttribute("data-manzana").replace("MZ.","");
@@ -2014,6 +2017,94 @@ function mostrarTipologia(){
   document.getElementById("mo-tip").classList.add("v");
 }
 function cerrarTipologia(){document.getElementById("mo-tip").classList.remove("v");}
+
+// ── Sync multi-dispositivo con Google Sheets ──
+function sincronizarLoteRS(mz,l,hitos){
+  var url=SCRIPT_URL+"?accion=set_lote_rs&mz="+encodeURIComponent(mz)+"&lote="+encodeURIComponent(l)+"&hitos="+encodeURIComponent(JSON.stringify(hitos));
+  fetch(url,{cache:"no-store"}).catch(function(){});
+}
+
+function inicializarRS(){
+  showT("Sincronizando...");
+  fetch(SCRIPT_URL+"?accion=get_estado_rs&_="+Date.now(),{cache:"no-store"})
+    .then(function(r){return r.json();})
+    .catch(function(){return null;})
+    .then(function(data){
+      if(!data||!data.ok){showT("Sin conexión - datos locales");return;}
+      var actualizados=0;
+      var paraSubir=[];
+      for(var i=0;i<data.datos.length;i++){
+        var d=data.datos[i];
+        var localH=gH(d.mz,d.lote);
+        var remotoH=d.hitos||[];
+        if(remotoH.length>localH.length){
+          localStorage.setItem("rs_"+d.mz+"_"+d.lote,JSON.stringify(remotoH));
+          actualizados++;
+        } else if(localH.length>remotoH.length){
+          paraSubir.push({mz:d.mz,lote:d.lote,hitos:localH});
+        }
+      }
+      // también subir lotes que están en local pero no en Sheets
+      for(var k=0;k<localStorage.length;k++){
+        var key=localStorage.key(k);
+        if(!key||key.indexOf("rs_")!==0)continue;
+        var parts=key.slice(3).split("_");
+        if(parts.length<2)continue;
+        var mzL=parts[0],lL=Number(parts[1]);
+        var enSheets=false;
+        for(var j=0;j<data.datos.length;j++){
+          if(String(data.datos[j].mz)===String(mzL)&&Number(data.datos[j].lote)===lL){enSheets=true;break;}
+        }
+        if(!enSheets){
+          var localHl=gH(mzL,lL);
+          if(localHl.length>0)paraSubir.push({mz:mzL,lote:lL,hitos:localHl});
+        }
+      }
+      if(actualizados>0){renderRes();renderManzanas();updateSVG();}
+      if(paraSubir.length>0){
+        var bIdx=0,batches=[];
+        for(var i=0;i<paraSubir.length;i+=10)batches.push(paraSubir.slice(i,i+10));
+        function nextBatch(){
+          if(bIdx>=batches.length){showT("Sincronizado ✓");return;}
+          var b=batches[bIdx++];
+          Promise.all(b.map(function(item){
+            return fetch(SCRIPT_URL+"?accion=set_lote_rs&mz="+encodeURIComponent(item.mz)+"&lote="+encodeURIComponent(item.lote)+"&hitos="+encodeURIComponent(JSON.stringify(item.hitos)),{cache:"no-store"})
+              .catch(function(){return null;});
+          })).then(function(){nextBatch();});
+        }
+        nextBatch();
+      } else {
+        showT(actualizados>0?"⟳ "+actualizados+" lotes actualizados":"Sincronizado ✓");
+      }
+    });
+}
+
+function sincronizarRS(){
+  var btn=document.getElementById("btn-sync");
+  if(btn)btn.textContent="⟳...";
+  inicializarRS();
+  setTimeout(function(){if(btn)btn.textContent="⟳ Sync";},3000);
+}
+
+setInterval(function(){
+  fetch(SCRIPT_URL+"?accion=get_estado_rs&_="+Date.now(),{cache:"no-store"})
+    .then(function(r){return r.json();})
+    .catch(function(){return null;})
+    .then(function(data){
+      if(!data||!data.ok)return;
+      var actualizados=0;
+      for(var i=0;i<data.datos.length;i++){
+        var d=data.datos[i];
+        var localH=gH(d.mz,d.lote);
+        var remotoH=d.hitos||[];
+        if(remotoH.length>localH.length){
+          localStorage.setItem("rs_"+d.mz+"_"+d.lote,JSON.stringify(remotoH));
+          actualizados++;
+        }
+      }
+      if(actualizados>0){renderRes();renderManzanas();updateSVG();showT("⟳ "+actualizados+" lotes actualizados");}
+    });
+},60000);
 </script>
 <div class="mo-tip" id="mo-tip" onclick="if(event.target===this)cerrarTipologia()">
   <div class="md-tip">
