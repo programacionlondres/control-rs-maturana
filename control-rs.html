@@ -78,7 +78,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
 .pe{font-size:11px;color:#A32D2D;text-align:center;margin-bottom:6px;display:none}
 .abadge{font-size:10px;background:#EAF3DE;color:#27500A;border:1px solid #639922;border-radius:99px;padding:2px 7px;display:none}
 .abadge.v{display:inline-block}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:12px;padding:6px 14px;border-radius:99px;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none;white-space:nowrap}
+.toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(26,26,26,0.92);color:#fff;font-size:13px;font-weight:500;padding:10px 20px;border-radius:12px;opacity:0;transition:opacity .3s;z-index:300;pointer-events:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3)}
 .toast.show{opacity:1}
 
 .mr-sem{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:150}
@@ -104,7 +104,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
 <body>
 <div class="header">
   <div><div class="titulo">Control de Rs - Enrique Maturana</div><div class="subtitulo" id="fh"></div></div>
-  <div style="display:flex;gap:5px;align-items:center">
+  <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end">
     <span class="abadge" id="ab">Admin</span>
     <a href="index.html" class="bh">&#8592; Inicio</a>
     <button class="bh" onclick="openPin()">Admin</button>
@@ -2024,13 +2024,23 @@ function sincronizarLoteRS(mz,l,hitos){
   fetch(url,{cache:"no-store"}).catch(function(){});
 }
 
+function showTOk(m){
+  var t=document.getElementById("toast");
+  t.textContent=m;t.classList.add("show");
+  setTimeout(function(){t.classList.remove("show");},4000);
+}
+
 function inicializarRS(){
+  var btnSync=document.getElementById("btn-sync");
   showT("Sincronizando...");
   fetch(SCRIPT_URL+"?accion=get_estado_rs&_="+Date.now(),{cache:"no-store"})
     .then(function(r){return r.json();})
     .catch(function(){return null;})
     .then(function(data){
-      if(!data||!data.ok){showT("Sin conexión - datos locales");return;}
+      if(!data||!data.ok){
+        if(btnSync)btnSync.textContent="⟳ Sync";
+        showT("Sin conexión - datos locales");return;
+      }
       var actualizados=0;
       var paraSubir=[];
       for(var i=0;i<data.datos.length;i++){
@@ -2044,7 +2054,7 @@ function inicializarRS(){
           paraSubir.push({mz:d.mz,lote:d.lote,hitos:localH});
         }
       }
-      // también subir lotes que están en local pero no en Sheets
+      // subir lotes locales que no están en Sheets
       for(var k=0;k<localStorage.length;k++){
         var key=localStorage.key(k);
         if(!key||key.indexOf("rs_")!==0)continue;
@@ -2062,10 +2072,16 @@ function inicializarRS(){
       }
       if(actualizados>0){renderRes();renderManzanas();updateSVG();}
       if(paraSubir.length>0){
+        if(btnSync)btnSync.textContent="↑ "+paraSubir.length+"...";
+        showT("Subiendo "+paraSubir.length+" lotes...");
         var bIdx=0,batches=[];
         for(var i=0;i<paraSubir.length;i+=10)batches.push(paraSubir.slice(i,i+10));
         function nextBatch(){
-          if(bIdx>=batches.length){showT("Sincronizado ✓");return;}
+          if(bIdx>=batches.length){
+            if(btnSync)btnSync.textContent="⟳ Sync";
+            showTOk("✓ Sincronizado · ya visible en otros dispositivos");
+            return;
+          }
           var b=batches[bIdx++];
           Promise.all(b.map(function(item){
             return fetch(SCRIPT_URL+"?accion=set_lote_rs&mz="+encodeURIComponent(item.mz)+"&lote="+encodeURIComponent(item.lote)+"&hitos="+encodeURIComponent(JSON.stringify(item.hitos)),{cache:"no-store"})
@@ -2074,7 +2090,12 @@ function inicializarRS(){
         }
         nextBatch();
       } else {
-        showT(actualizados>0?"⟳ "+actualizados+" lotes actualizados":"Sincronizado ✓");
+        if(btnSync)btnSync.textContent="⟳ Sync";
+        if(actualizados>0){
+          showTOk("⟳ "+actualizados+" lotes actualizados desde otra app");
+        } else {
+          showTOk("✓ Sincronizado · ya visible en otros dispositivos");
+        }
       }
     });
 }
@@ -2083,7 +2104,6 @@ function sincronizarRS(){
   var btn=document.getElementById("btn-sync");
   if(btn)btn.textContent="⟳...";
   inicializarRS();
-  setTimeout(function(){if(btn)btn.textContent="⟳ Sync";},3000);
 }
 
 setInterval(function(){
