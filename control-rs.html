@@ -128,7 +128,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
   <button class="fb" id="f-nd" onclick="filtrar('nd')">Sin inicio</button>
   <button class="fb" style="background:#1A1846;color:#fff;border-color:#1A1846;margin-left:4px" onclick="mostrarTipologia()">&#9638; Tipología</button>
 </div>
-<div class="ley">
+<div class="ley" id="ley">
   <div class="li"><div class="lc" style="background:#f8f8f5;border-color:#ccc"></div>Sin inicio</div>
   <div class="li"><div class="lc" style="background:#90C8FF;border-color:#1a5fa8"></div>Sello gris</div>
   <div class="li"><div class="lc" style="background:#90EE90;border-color:#2e8b2e"></div>R0</div>
@@ -137,6 +137,13 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
   <div class="li"><div class="lc" style="background:#006400;border-color:#003200"></div>RF ✓</div>
   <div class="li"><div class="lc" style="background:#FF6B6B;border-color:#CC0000"></div>Atrasado</div>
   <div class="li"><div class="lc" style="background:#FF8C00;border-color:#CC5500"></div>Esta semana</div>
+</div>
+<div class="ley" id="ley-tip" style="display:none">
+  <div class="li"><div class="lc" style="background:#4472C4;border-color:#2E5BA6"></div>SM1</div>
+  <div class="li"><div class="lc" style="background:#ED7D31;border-color:#C55A11"></div>SM2</div>
+  <div class="li"><div class="lc" style="background:#E74C3C;border-color:#C0392B"></div>Vulnerable</div>
+  <div class="li"><div class="lc" style="background:#2ECC71;border-color:#1A9E55"></div>Emergente</div>
+  <div class="li"><div class="lc" style="background:#9B59B6;border-color:#7D3C98"></div>Mov. Reducida</div>
 </div>
 <div class="svg-label">Plano de referencia</div>
 <div class="svg-wrap" id="svg-wrap">
@@ -153,6 +160,17 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
       .lot-rf { fill: #006400; stroke: #003200; stroke-width: 1.5; }
       .lot-atrasado { fill: #FF6B6B; stroke: #CC0000; stroke-width: 1.5; }
       .lot-esta-semana { fill: #FF8C00; stroke: #CC5500; stroke-width: 1.5; }
+      /* Tipología */
+      .lot-tip-sm1 { fill: #4472C4; stroke: #2E5BA6; stroke-width: 1.5; }
+      .lot-tip-sm2 { fill: #ED7D31; stroke: #C55A11; stroke-width: 1.5; }
+      .lot-tip-vul { fill: #E74C3C; stroke: #C0392B; stroke-width: 1.5; }
+      .lot-tip-emer { fill: #2ECC71; stroke: #1A9E55; stroke-width: 1.5; }
+      .lot-tip-mov { fill: #9B59B6; stroke: #7D3C98; stroke-width: 1.5; }
+      .c.tip-sm1{background:#4472C4!important;border-color:#2E5BA6!important;color:#fff!important}
+      .c.tip-sm2{background:#ED7D31!important;border-color:#C55A11!important;color:#fff!important}
+      .c.tip-vul{background:#E74C3C!important;border-color:#C0392B!important;color:#fff!important}
+      .c.tip-emer{background:#2ECC71!important;border-color:#1A9E55!important;color:#fff!important}
+      .c.tip-mov{background:#9B59B6!important;border-color:#7D3C98!important;color:#fff!important}
       .lotline { stroke: #000; stroke-width: 1; fill: none; }
       .header { fill: rgb(46,117,182); stroke: #000; stroke-width: 1; }
       .cap { fill: #fff; stroke: #000; stroke-width: 1; }
@@ -1154,7 +1172,7 @@ body{font-family:-apple-system,sans-serif;background:#f0f0ec;color:#1a1a1a}
 <div class="toast" id="toast"></div>
 <script>
 var SCRIPT_URL="https://script.google.com/macros/s/AKfycbwZr2aE9Mv7As6gPi0mzoEqM1UgvMKZreBYgWCYdr9yA5989gs88429I24RXvSLb2YcHg/exec";
-var PIN="0525",admin=false,fa="todos",ca=null,ht=[],pc=null;
+var PIN="0525",admin=false,fa="todos",ca=null,ht=[],pc=null,modTip=false;
 var ET=["sg","r0","r0obs","r1","rf"];
 var EN={sg:1,r0:2,r0obs:2,r1:3,rf:4};
 var EL={sg:"Sello gris",r0:"R0",r0obs:"R0 + Observaciones",r1:"R1",rf:"RF"};
@@ -1373,31 +1391,31 @@ var TIPOLOGIAS={
   "A":{1:"vul",2:"vul",3:"sm1",4:"sm1",5:"vul",6:"vul",7:"sm1",8:"sm1",9:"vul",10:"vul",
        11:"emer",12:"emer",13:"vul",14:"vul",15:"emer",16:"emer",17:"sm1",18:"sm1",
        19:"vul",20:"vul",21:"emer",22:"emer",23:"vul",24:"vul",25:"emer",26:"emer",
-       27:"sm2",28:"sm1",29:"emer",30:"emer",31:"sm1",32:"sm1"},
-  "B":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
-       11:"sm1",12:"sm1",13:"sm1",14:"sm1",15:"emer",16:"emer",17:"vul",18:"vul",
-       19:"sm1",20:"sm1",21:"sm1",22:"sm1",23:"sm1",24:"sm1"},
-  "C":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
-       11:"sm1",12:"sm1",13:"emer",14:"emer",15:"vul",16:"vul",17:"sm1",18:"sm1",
-       19:"sm1",20:"sm1"},
+       27:"sm2",28:"sm2",29:"emer",30:"emer",31:"sm2",32:"sm2"},
+  "B":{1:"sm2",2:"sm2",3:"vul",4:"vul",5:"sm1",6:"sm1",7:"sm2",8:"sm2",9:"sm1",10:"sm1",
+       11:"sm2",12:"sm2",13:"sm2",14:"sm2",15:"emer",16:"emer",17:"vul",18:"vul",
+       19:"sm1",20:"sm1",21:"sm1",22:"sm1",23:"sm2",24:"sm2"},
+  "C":{1:"sm2",2:"sm2",3:"vul",4:"vul",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm2",10:"sm2",
+       11:"sm2",12:"sm2",13:"emer",14:"emer",15:"vul",16:"vul",17:"sm1",18:"sm1",
+       19:"sm2",20:"sm2"},
   "D":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
-       11:"sm1",12:"sm1",13:"sm1",14:"vul",15:"vul",16:"sm1",17:"sm1",18:"sm1"},
-  "E":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1"},
-  "F":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
-       11:"emer",12:"emer",13:"vul",14:"vul",15:"sm1",16:"sm1",17:"sm1",18:"sm1",
-       19:"sm1",20:"sm1",21:"vul",22:"vul",23:"sm1",24:"sm1",25:"emer",26:"emer",
+       11:"sm2",12:"sm2",13:"sm1",14:"sm1",15:"vul",16:"vul",17:"sm1",18:"sm1"},
+  "E":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"sm2",6:"sm2",7:"sm2",8:"sm2",9:"sm2",10:"sm2"},
+  "F":{1:"sm2",2:"sm2",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
+       11:"emer",12:"emer",13:"vul",14:"vul",15:"sm1",16:"sm1",17:"sm2",18:"sm2",
+       19:"sm2",20:"sm2",21:"vul",22:"vul",23:"sm1",24:"sm1",25:"emer",26:"emer",
        27:"sm1",28:"sm1",29:"vul",30:"vul",31:"emer",32:"emer",33:"sm1",34:"sm1",
-       35:"sm1",36:"sm1"},
-  "G":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"emer",6:"emer",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
-       11:"vul",12:"vul",13:"sm1",14:"sm1",15:"sm1",16:"sm1",17:"vul",18:"vul",
+       35:"sm2",36:"sm2"},
+  "G":{1:"sm2",2:"sm2",3:"sm2",4:"sm2",5:"emer",6:"emer",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
+       11:"vul",12:"vul",13:"sm1",14:"sm1",15:"sm2",16:"sm2",17:"vul",18:"vul",
        19:"sm1",20:"sm1",21:"vul",22:"vul",23:"sm1",24:"sm1",25:"emer",26:"vul",
-       27:"sm1",28:"sm1"},
-  "H":{1:"sm1",2:"sm1",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
-       11:"vul",12:"vul",13:"sm1",14:"sm1"},
-  "J":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"sm1",6:"sm1",7:"sm1",8:"sm1",9:"sm1",10:"sm1",
-       11:"sm1",12:"sm1",13:"sm1",14:"sm1",15:"sm1",16:"sm1",17:"emer",18:"emer",
-       19:"vul",20:"vul",21:"emer",22:"emer",23:"vul",24:"vul",25:"sm1",26:"sm1"},
-  "K":{1:"sm1",2:"sm1",3:"sm1",4:"sm1",5:"mov",6:"sm1",7:"sm1"}
+       27:"sm2",28:"sm2"},
+  "H":{1:"sm2",2:"sm2",3:"vul",4:"vul",5:"emer",6:"emer",7:"vul",8:"vul",9:"sm1",10:"sm1",
+       11:"vul",12:"vul",13:"sm2",14:"sm2"},
+  "J":{1:"sm2",2:"sm2",3:"sm2",4:"sm2",5:"sm1",6:"sm1",7:"sm2",8:"sm2",9:"sm1",10:"sm1",
+       11:"sm2",12:"sm2",13:"sm2",14:"sm2",15:"sm1",16:"sm1",17:"emer",18:"emer",
+       19:"vul",20:"vul",21:"emer",22:"emer",23:"vul",24:"vul",25:"sm2",26:"sm2"},
+  "K":{1:"sm2",2:"sm2",3:"sm2",4:"sm2",5:"mov",6:"sm2",7:"sm2"}
 };
 
 var MANZANAS=[
@@ -1440,6 +1458,21 @@ function dv(h,f){
   return false;
 }
 
+function mostrarTipologia(){
+  modTip=!modTip;
+  var btn=document.querySelector('button[onclick="mostrarTipologia()"]');
+  if(modTip){
+    btn.style.background='#9B59B6';btn.style.borderColor='#7D3C98';
+    document.getElementById("ley").style.display='none';
+    document.getElementById("ley-tip").style.display='';
+  } else {
+    btn.style.background='#1A1846';btn.style.borderColor='#1A1846';
+    document.getElementById("ley").style.display='';
+    document.getElementById("ley-tip").style.display='none';
+  }
+  updateSVG();renderManzanas();
+}
+
 function updateSVG(){
   for(var i=0;i<MANZANAS.length;i++){
     var mz=MANZANAS[i];
@@ -1451,12 +1484,17 @@ function updateSVG(){
       if(svgEl){
         var rect=svgEl.querySelector("rect");
         if(rect){
-          var cf2=colorFecha(mz.id,l,h);
-          var displayU=(fa!=="todos"&&fa!=="si")?fa:u;
-          var lotCls="lot";
-          if(displayU) lotCls+=" lot-"+displayU;
-          else if(cf2) lotCls+=" lot-"+cf2;
-          rect.className.baseVal=lotCls;
+          if(modTip){
+            var tipo=(TIPOLOGIAS[mz.id]&&TIPOLOGIAS[mz.id][l])||'sm1';
+            rect.className.baseVal='lot lot-tip-'+tipo;
+          } else {
+            var cf2=colorFecha(mz.id,l,h);
+            var displayU=(fa!=="todos"&&fa!=="si")?fa:u;
+            var lotCls="lot";
+            if(displayU) lotCls+=" lot-"+displayU;
+            else if(cf2) lotCls+=" lot-"+cf2;
+            rect.className.baseVal=lotCls;
+          }
         }
         svgEl.style.opacity=dv(h,fa)?"1":"0.08";
       }
@@ -1483,14 +1521,25 @@ function renderManzanas(){
       var d=document.createElement("div");
       var cf = colorFecha(mz.id, l, h);
       var cls = "c";
-      if (u) cls += " " + u;
-      else if (cf) cls += " " + cf;
+      if(modTip){
+        var tipo=(TIPOLOGIAS[mz.id]&&TIPOLOGIAS[mz.id][l])||'sm1';
+        cls+=' tip-'+tipo;
+      } else {
+        if (u) cls += " " + u;
+        else if (cf) cls += " " + cf;
+      }
       d.className=cls;
       d.dataset.mz=mz.id;d.dataset.l=l;
-      var keyF = mz.id + "-" + l;
-      var fR0 = FECHAS_R0[keyF] ? " (R0 prog: "+FECHAS_R0[keyF]+")" : "";
-      d.title = "Mz." + mz.id + " L" + l + fR0;
-      d.textContent=(u==="rf")?"✓ "+l:l;
+      if(modTip){
+        var tipo=(TIPOLOGIAS[mz.id]&&TIPOLOGIAS[mz.id][l])||'sm1';
+        var tNom={sm1:'SM1',sm2:'SM2',vul:'Vulnerable',emer:'Emergente',mov:'Mov. Reducida'};
+        d.title="Mz."+mz.id+" L"+l+" - "+tNom[tipo];
+      } else {
+        var keyF = mz.id + "-" + l;
+        var fR0 = FECHAS_R0[keyF] ? " (R0 prog: "+FECHAS_R0[keyF]+")" : "";
+        d.title = "Mz." + mz.id + " L" + l + fR0;
+      }
+      d.textContent=(u==="rf"&&!modTip)?"✓ "+l:l;
       if(!dv(h,fa))d.classList.add("oculta");
       d.addEventListener("click",(function(mzid,lot){return function(){click(mzid,lot);};})(mz.id,l));
       grid.appendChild(d);
