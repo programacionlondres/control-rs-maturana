@@ -1540,7 +1540,10 @@ function renderManzanas(){
         var fR0 = FECHAS_R0[keyF] ? " (R0 prog: "+FECHAS_R0[keyF]+")" : "";
         d.title = "Mz." + mz.id + " L" + l + fR0;
       }
-      d.textContent=(u==="rf"&&!modTip)?"✓ "+l:l;
+      var tAbbr={sm1:"SM1",sm2:"SM2",vul:"VUL",emer:"EME",mov:"MOV"};
+      var tipKey=(TIPOLOGIAS[mz.id]&&TIPOLOGIAS[mz.id][l])||"sm1";
+      var numTxt=(u==="rf"&&!modTip)?"✓ "+l:String(l);
+      d.innerHTML=numTxt+'<div style="font-size:7px;line-height:1.1;opacity:0.75;margin-top:1px">'+tAbbr[tipKey]+'</div>';
       if(!dv(h,fa))d.classList.add("oculta");
       d.addEventListener("click",(function(mzid,lot){return function(){click(mzid,lot);};})(mz.id,l));
       grid.appendChild(d);
