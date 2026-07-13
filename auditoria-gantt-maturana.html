@@ -293,9 +293,18 @@ var MODAL_SEL = [];
 
 // ---- INIT: carga semana actual (endpoint ligero, sin partidas) ----
 (function initSemana() {
+  // Fallback: usa la fecha de hoy como semana si no hay Historico configurado
+  function usarFechaHoy() {
+    var hoy = new Date();
+    var d = String(hoy.getDate()).padStart(2,'0');
+    var m = String(hoy.getMonth()+1).padStart(2,'0');
+    var y = hoy.getFullYear();
+    CURRENT_SEMANA = d + '/' + m + '/' + y;
+    document.getElementById('week-pill').textContent = '📅 ' + CURRENT_SEMANA;
+  }
   var done = false;
   var fallback = setTimeout(function() {
-    if (!done) { done = true; document.getElementById('week-pill').textContent = '📅 (sin conexión)'; }
+    if (!done) { done = true; usarFechaHoy(); }
   }, 6000);
   fetch(SCRIPT_URL + '?action=getSemanaActual&_=' + Date.now())
     .then(function(r){ return r.json(); })
@@ -305,12 +314,12 @@ var MODAL_SEL = [];
         CURRENT_SEMANA = d.semana;
         document.getElementById('week-pill').textContent = '📅 ' + d.semana;
       } else {
-        document.getElementById('week-pill').textContent = '📅 (sin semana activa)';
+        usarFechaHoy();
       }
     })
     .catch(function(){
       if (done) return; done = true; clearTimeout(fallback);
-      document.getElementById('week-pill').textContent = '📅 (sin conexión)';
+      usarFechaHoy();
     });
 })();
 
