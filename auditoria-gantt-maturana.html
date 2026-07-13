@@ -844,15 +844,22 @@ function doSave() {
   }
   var st = document.getElementById('save-st');
   st.textContent = 'Guardando…'; st.style.color = '#8899bb';
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action: 'saveAuditData', semana: CURRENT_SEMANA, rol: ROLE, datos: DATA[ROLE] })
-  })
-    .then(function(){
-      st.textContent = '✓ Enviado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
-      st.style.color = '#1a9b5a';
+  var saveUrl = SCRIPT_URL
+    + '?action=saveAuditData'
+    + '&semana=' + encodeURIComponent(CURRENT_SEMANA)
+    + '&rol='    + encodeURIComponent(ROLE)
+    + '&datos='  + encodeURIComponent(JSON.stringify(DATA[ROLE]))
+    + '&_='      + Date.now();
+  fetch(saveUrl)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.ok) {
+        st.textContent = '✓ Guardado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+        st.style.color = '#1a9b5a';
+      } else {
+        st.textContent = '⚠ Error: ' + (d && d.error ? d.error : JSON.stringify(d));
+        st.style.color = '#cc4422';
+      }
     })
     .catch(function(err){
       st.textContent = '⚠ Error: ' + (err && err.message ? err.message.slice(0,50) : 'red');
