@@ -907,4 +907,80 @@ function showCompare() {
       function eqVal(jv, cv, tipo) {
         if (!hasJt || !hasCal) return false;
         if (tipo === 'viv') {
-          var ja = Array.isArray
+          var ja = Array.isArray(jv) ? jv.slice().sort() : [];
+          var ca = Array.isArray(cv) ? cv.slice().sort() : [];
+          return ja.length === ca.length && ja.every(function(v,i){ return v === ca[i]; });
+        }
+        return jv === cv;
+      }
+
+      var eq = eqVal(jv, cv, p.tipo);
+      if (hasJt && hasCal) { if (eq) ok++; else diffs++; }
+      else if (hasJt && !hasCal) onlyJt++;
+      else if (!hasJt && hasCal) onlyCal++;
+
+      var jtCell = makeEl('div', 'cmp-val' + (!hasJt ? ' diff' : ''));
+      jtCell.textContent = fmtVal(jv, p.tipo);
+      row.appendChild(jtCell);
+
+      var calCell = makeEl('div', 'cmp-val' + (!hasCal ? ' diff' : ''));
+      calCell.textContent = fmtVal(cv, p.tipo);
+      row.appendChild(calCell);
+
+      var difCell = makeEl('div', '');
+      difCell.style.textAlign = 'center';
+      if (!hasJt || !hasCal) {
+        var badge = makeEl('span', 'diff-badge');
+        badge.textContent = !hasJt ? 'Solo Cal' : 'Solo JT';
+        difCell.appendChild(badge);
+      } else if (eq) {
+        var badge = makeEl('span', 'ok-badge');
+        badge.textContent = '✓';
+        difCell.appendChild(badge);
+      } else {
+        var badge = makeEl('span', 'diff-badge');
+        badge.textContent = '≠';
+        difCell.appendChild(badge);
+        if (p.tipo === 'viv') {
+          var ja2 = Array.isArray(jv) ? jv : [];
+          var ca2 = Array.isArray(cv) ? cv : [];
+          var jtOnly = ja2.filter(function(v){ return ca2.indexOf(v) < 0; });
+          var calOnly = ca2.filter(function(v){ return ja2.indexOf(v) < 0; });
+          if (jtOnly.length) {
+            var d = makeEl('div', 'lote-diff');
+            d.innerHTML = '<span class="jt-only">JT+: ' + jtOnly.join(', ') + '</span>';
+            difCell.appendChild(d);
+          }
+          if (calOnly.length) {
+            var d = makeEl('div', 'lote-diff');
+            d.innerHTML = '<span class="cal-only">Cal+: ' + calOnly.join(', ') + '</span>';
+            difCell.appendChild(d);
+          }
+        }
+      }
+      row.appendChild(difCell);
+      card.appendChild(row);
+    });
+
+    con.appendChild(card);
+  });
+
+  // Resumen
+  var sum = makeEl('div', 'cmp-sum');
+  [
+    { n: ok,      lbl: 'Coinciden',   col: '#1a9b5a' },
+    { n: diffs,   lbl: 'Difieren',    col: '#cc4422' },
+    { n: onlyJt,  lbl: 'Solo JT',     col: '#886611' },
+    { n: onlyCal, lbl: 'Solo Calidad',col: '#1a5aaa' }
+  ].forEach(function(it) {
+    var si = makeEl('div', 'cmp-sum-item');
+    var sn = makeEl('div', 'cmp-sum-n'); sn.textContent = it.n; sn.style.color = it.col;
+    var sl = makeEl('div', 'cmp-sum-lbl'); sl.textContent = it.lbl;
+    si.appendChild(sn); si.appendChild(sl);
+    sum.appendChild(si);
+  });
+  con.appendChild(sum);
+}
+</script>
+</body>
+</html>
