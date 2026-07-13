@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Auditoría Interna Gantt – Maturana</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#1a1a2e;font-size:14px}
+
+.header{background:linear-gradient(135deg,#1a2744,#0d1b38);color:white;padding:0 16px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.4)}
+.hlogo{font-size:10px;font-weight:800;letter-spacing:2px;color:#e8821a;text-transform:uppercase}
+.htitle{font-size:14px;font-weight:600;color:#e8e8f0}
+.hright{display:flex;align-items:center;gap:10px}
+.role-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.rb-jt{background:#1a6b3a;color:#7fffb0}.rb-cal{background:#1a4b8a;color:#7bc8ff}.rb-gaby{background:#6b1a5a;color:#ffb3f0}
+.week-pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#ccd;padding:3px 8px;border-radius:5px;font-size:11px}
+.logout-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.25);color:#ddeeff;padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px}
+.logout-btn:hover{background:rgba(255,255,255,.18);color:white}
+
+.prog-wrap{background:#0d1b38;padding:6px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #1e3060}
+.prog-txt{font-size:11px;color:#8899bb;white-space:nowrap}
+.prog-track{flex:1;height:5px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,#1a9b5a,#22dd80);border-radius:3px;transition:width .4s}
+.prog-pct{font-size:12px;font-weight:700;color:#22dd80;min-width:34px;text-align:right}
+
+.screen{display:none}
+.screen.active{display:block}
+
+/* LOGIN */
+.login-wrap{min-height:calc(100vh - 54px);display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 30%,#1a2a50,#0a0f1f)}
+.login-card{background:#131c38;border:1px solid #243060;border-radius:14px;padding:36px 32px;width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.login-title{font-size:19px;font-weight:700;color:#e8e8f0;margin-bottom:3px}
+.login-sub{font-size:11px;color:#5566aa;margin-bottom:28px}
+.login-lbl{font-size:11px;color:#8899bb;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px}
+.rbtn{width:100%;padding:12px 16px;margin-bottom:8px;border:2px solid;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;transition:all .15s;background:rgba(255,255,255,.03)}
+.rbtn:hover{transform:translateX(3px)}
+.rbtn.jt{border-color:#1a7a45;color:#5effa0}.rbtn.jt:hover{background:rgba(26,122,69,.15)}
+.rbtn.cal{border-color:#1a5aaa;color:#70c0ff}.rbtn.cal:hover{background:rgba(26,90,170,.15)}
+.rbtn.gaby{border-color:#8a1a7a;color:#ffaaee}.rbtn.gaby:hover{background:rgba(138,26,122,.15)}
+.rbtn-icon{font-size:20px}
+.rbtn-name{font-size:13px;font-weight:700}
+.rbtn-desc{font-size:10px;opacity:.6;margin-top:1px}
+
+/* AUDIT */
+.audit-wrap{max-width:860px;margin:0 auto;padding:14px 12px}
+
+.chapter{background:white;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden}
+.ch-hdr{display:flex;align-items:center;gap:10px;padding:13px 16px;cursor:pointer;background:#1a2744;color:white;user-select:none}
+.ch-hdr:hover{background:#1e2f54}
+.ch-arr{font-size:11px;transition:transform .22s;color:#8899bb;flex-shrink:0}
+.ch-arr.open{transform:rotate(90deg)}
+.ch-name{font-size:14px;font-weight:700;flex:1}
+.ch-stats{font-size:11px;color:#8899bb;white-space:nowrap}
+.ch-bar{width:70px;height:4px;background:rgba(255,255,255,.12);border-radius:2px;overflow:hidden;flex-shrink:0}
+.ch-bar-fill{height:100%;background:#22dd80;border-radius:2px;transition:width .3s}
+.ch-body{display:none}
+.ch-body.open{display:block}
+
+.group{border-top:2px solid #d8e0f0}
+.grp-hdr{display:flex;align-items:center;gap:8px;padding:9px 16px;cursor:pointer;background:#e4ecf8;user-select:none}
+.grp-hdr:hover{background:#d8e4f5}
+.grp-arr{font-size:10px;color:#4466aa;transition:transform .2s;flex-shrink:0}
+.grp-arr.open{transform:rotate(90deg)}
+.grp-name{font-size:12px;font-weight:700;color:#1a2744;flex:1;text-transform:uppercase;letter-spacing:.5px}
+.grp-stats{font-size:11px;color:#8899bb}
+.grp-bar{width:60px;height:3px;background:#c0ceea;border-radius:2px;overflow:hidden;flex-shrink:0}
+.grp-bar-fill{height:100%;background:#3388dd;border-radius:2px;transition:width .3s}
+.grp-body{display:none}
+.grp-body.open{display:block}
+
+.section{border-top:1px solid #eef0f8}
+.sec-hdr{display:flex;align-items:center;gap:8px;padding:8px 16px 8px 28px;cursor:pointer;background:#f6f8fd;user-select:none}
+.sec-hdr:hover{background:#eef1fa}
+.sec-arr{font-size:9px;color:#99aac0;transition:transform .18s;flex-shrink:0}
+.sec-arr.open{transform:rotate(90deg)}
+.sec-name{font-size:11px;font-weight:700;color:#2c4070;flex:1;text-transform:uppercase;letter-spacing:.4px}
+.sec-count{font-size:10px;color:#aab}
+.sec-bar{width:50px;height:3px;background:#e0e5ef;border-radius:2px;overflow:hidden;flex-shrink:0}
+.sec-bar-fill{height:100%;background:#1a9b5a;border-radius:2px;transition:width .3s}
+.sec-body{display:none;padding-bottom:2px}
+.sec-body.open{display:block}
+
+.p-row{display:flex;align-items:center;gap:8px;padding:7px 16px 7px 40px;border-top:1px solid #f0f3f8;transition:background .1s}
+.p-row:hover{background:#fafbff}
+.p-row.filled{background:#f4fff8}
+.p-row.direct{padding-left:28px}
+.p-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;transition:background .2s}
+.p-dot.empty{background:#dde2ea}.p-dot.done{background:#1a9b5a}
+.p-num{font-size:10px;color:#c0c8d8;min-width:24px;text-align:right;flex-shrink:0}
+.p-name{flex:1;font-size:12px;color:#334;line-height:1.3}
+.p-inc{font-size:10px;color:#aab;min-width:40px;text-align:right;flex-shrink:0}
+.p-inp{min-width:120px;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-shrink:0}
+
+.pct-wrap{display:flex;align-items:center;gap:3px}
+.pct-input{width:64px;padding:5px 7px;border:1.5px solid #d0d8e8;border-radius:5px;font-size:13px;font-weight:600;color:#224;text-align:right;background:#fafbff;transition:border-color .15s}
+.pct-input:focus{outline:none;border-color:#4488cc;background:white}
+.pct-input.filled{border-color:#1a9b5a;background:#f0fff7}
+.pct-sym{font-size:11px;color:#8899bb}
+
+.viv-btn{padding:5px 10px;border-radius:5px;border:1.5px solid #cc8822;background:#fff8f0;color:#7a4800;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .15s;white-space:nowrap}
+.viv-btn:hover{background:#ffe8cc;border-color:#e8821a}
+.viv-btn.filled{background:#fff0d8;border-color:#e8821a}
+.viv-cnt{background:#e8821a;color:white;border-radius:10px;padding:1px 5px;font-size:9px;font-weight:700;min-width:18px;text-align:center}
+
+/* MODAL */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;justify-content:center;align-items:center}
+.modal-ov.open{display:flex}
+.modal-box{background:white;border-radius:13px;width:94vw;max-width:760px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.modal-top{background:#1a2744;color:white;padding:12px 18px;display:flex;align-items:center;justify-content:space-between}
+.modal-tit{font-size:13px;font-weight:700}
+.modal-sub{font-size:10px;color:#8899bb;margin-top:2px}
+.modal-x{background:none;border:none;color:#8899bb;font-size:18px;cursor:pointer}
+.modal-x:hover{color:white}
+.modal-body{padding:14px;overflow-y:auto;flex:1}
+.modal-foot{padding:10px 18px;border-top:1px solid #eef;display:flex;align-items:center;justify-content:space-between}
+.modal-sel{font-size:11px;color:#5566aa}
+.modal-n{font-weight:700;color:#1a9b5a}
+.confirm-btn{padding:7px 18px;background:#1a6b3a;color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
+.confirm-btn:hover{background:#138030}
+
+.quick-bar{display:flex;gap:5px;margin-bottom:12px;flex-wrap:wrap;align-items:center}
+.qb-lbl{font-size:10px;color:#8899bb}
+.qchip{padding:3px 9px;border-radius:12px;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid;transition:all .12s}
+.qchip.sm1{border-color:#4488dd;color:#2266bb;background:#eef5ff}.qchip.sm2{border-color:#44aa55;color:#228833;background:#eefff2}
+.qchip.vul{border-color:#dd8833;color:#aa5500;background:#fff8ee}.qchip.emer{border-color:#aa55bb;color:#773399;background:#fcf0ff}
+.qchip.all{border-color:#8899bb;color:#4455aa;background:#f4f6fb}.qchip.none{border-color:#ccccdd;color:#8899bb;background:#fafafa}
+.qchip.mz{border-color:#1a2744;color:#1a2744;background:#e8ecf8;font-size:11px;padding:3px 11px}
+.qchip.mz.active{background:#1a2744;color:white}
+.qchip:hover{opacity:.8}
+
+.mz-wrap{margin-bottom:12px}
+.mz-lbl{font-size:10px;font-weight:700;color:#2c4070;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.mz-badge{background:#1a2744;color:white;padding:1px 6px;border-radius:3px;font-size:9px}
+.lotes-grid{display:flex;flex-wrap:wrap;gap:3px}
+.lote{width:32px;height:32px;border-radius:5px;border:1.5px solid #d0d8e8;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#556;cursor:pointer;transition:all .1s;background:#f8f9fd;user-select:none}
+.lote:hover{border-color:#e8821a;background:#fff3e0}
+.lote.sel{background:#e8821a;border-color:#c06010;color:white}
+.lote.sm1{border-color:#b8d0f0;background:#ddeeff}.lote.sm1.sel{background:#4488dd;border-color:#2266bb;color:white}
+.lote.sm2{border-color:#c0d8b8;background:#ddf0dd}.lote.sm2.sel{background:#44aa55;border-color:#228833;color:white}
+.lote.vul{border-color:#f0d0b0;background:#fff0d8}.lote.vul.sel{background:#dd8833;border-color:#bb6611;color:white}
+.lote.emer{border-color:#e0b8d8;background:#f8e8f8}.lote.emer.sel{background:#aa55bb;border-color:#883399;color:white}
+.lote.mrv{border-color:#c0a0e0;background:#f0e8ff}.lote.mrv.sel{background:#7744cc;border-color:#5522aa;color:white}.lote.mov{border-color:#b8a070;background:#f5edd8}.lote.mov.sel{background:#9c6e1a;border-color:#7a5210;color:white}
+
+/* COMPARE */
+.cmp-wrap{max-width:1050px;margin:0 auto;padding:14px 12px}
+.cmp-card{background:white;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.07);overflow:hidden;margin-bottom:10px}
+.cmp-top{background:#1a2744;color:white;padding:12px 18px}
+.cmp-top-tit{font-size:14px;font-weight:700}
+.cmp-hrow{display:grid;grid-template-columns:1fr 170px 170px 60px;gap:6px;padding:7px 16px;background:#e4ecf8;font-size:10px;font-weight:700;color:#2c4070;text-transform:uppercase;letter-spacing:.5px}
+.cmp-row{display:grid;grid-template-columns:1fr 170px 170px 60px;gap:6px;padding:7px 16px;border-top:1px solid #f0f2f8;align-items:center}
+.cmp-row:hover{background:#fafbff}
+.cmp-pn{font-size:11px;color:#334}
+.cmp-pnum{font-size:9px;color:#aab;margin-right:3px}
+.cmp-val{text-align:center;font-weight:700;font-size:12px}
+.ok{color:#1a9b5a}.diff{color:#cc4422}
+.ok-badge{background:#f0fff8;border:1px solid #bbffdd;color:#1a7a45;border-radius:4px;padding:2px 5px;font-size:10px;font-weight:700}
+.diff-badge{background:#fff0ee;border:1px solid #ffccbb;color:#cc4422;border-radius:4px;padding:2px 5px;font-size:10px;font-weight:700}
+.lote-diff{font-size:10px;margin-top:3px;text-align:left;line-height:1.3}
+.jt-only{color:#cc4422}.cal-only{color:#1a5aaa}
+.grp-sep{background:#f0f4fc;padding:5px 16px 5px 22px;font-size:10px;font-weight:700;color:#4455aa;text-transform:uppercase;letter-spacing:.4px;border-top:1px solid #eef}
+.cmp-sum{display:flex;border-top:2px solid #eef}
+.cmp-sum-item{flex:1;text-align:center;padding:12px 8px;border-right:1px solid #eef}
+.cmp-sum-item:last-child{border-right:none}
+.cmp-sum-n{font-size:22px;font-weight:800}
+.cmp-sum-lbl{font-size:10px;color:#5566aa;margin-top:2px}
+
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e0e5ef;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 -2px 12px rgba(0,0,0,.1);z-index:90}
+.nav-links{display:flex;gap:6px}
+.nav-btn{padding:7px 12px;background:#f0f2f8;border:1px solid #d8dce8;border-radius:7px;font-size:11px;color:#4455aa;cursor:pointer;font-weight:600;transition:all .15s}
+.nav-btn:hover{background:#e0e5f8}
+.nav-btn.active{background:#1a2744;color:white;border-color:#1a2744}
+.save-btn{padding:8px 20px;background:#1a6b3a;color:white;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer}
+.save-btn:hover{background:#138030}
+.save-st{font-size:10px;color:#aab}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="hlogo">Constructora Londres</div>
+    <div class="htitle">Auditoría Interna Gantt &middot; Obra Petit</div>
+  </div>
+  <div class="hright">
+    <div class="week-pill" id="week-pill">📅 Cargando…</div>
+    <div class="role-badge" id="role-badge" style="display:none"></div>
+    <button class="logout-btn" id="btn-logout" style="display:none">← Cambiar rol</button>
+  </div>
+</div>
+
+<div class="prog-wrap" id="prog-wrap" style="display:none">
+  <span class="prog-txt" id="prog-txt">0 / 295</span>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <span class="prog-pct" id="prog-pct">0%</span>
+</div>
+
+<div id="sc-login" class="screen active">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-title">Auditoría Gantt</div>
+      <div class="login-sub">Obra Enrique Maturana</div>
+      <div class="login-lbl">&#191;Qui&eacute;n eres?</div>
+      <button class="rbtn jt" id="btn-jt">
+        <span class="rbtn-icon">&#128119;</span>
+        <div><div class="rbtn-name">Jefe de Terreno</div><div class="rbtn-desc">Registrar avance desde terreno</div></div>
+      </button>
+      <button class="rbtn cal" id="btn-cal">
+        <span class="rbtn-icon">&#128203;</span>
+        <div><div class="rbtn-name">Calidad</div><div class="rbtn-desc">Registrar avance control de calidad</div></div>
+      </button>
+      <button class="rbtn gaby" id="btn-gaby">
+        <span class="rbtn-icon">&#128269;</span>
+        <div><div class="rbtn-name">Comparaci&oacute;n</div><div class="rbtn-desc">Ver diferencias entre registros</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- PIN SCREEN -->
+<div id="sc-pin" class="screen">
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-title" id="pin-title">Jefe de Terreno</div>
+      <div class="login-sub" id="pin-semana">Ingresa tu PIN de acceso</div>
+      <div style="margin:24px 0">
+        <input id="pin-input" type="password" inputmode="numeric" maxlength="4"
+          style="width:100%;text-align:center;font-size:32px;font-weight:800;letter-spacing:12px;padding:14px;border:2px solid #243060;border-radius:10px;background:#0d1b38;color:#e8e8f0;outline:none"
+          placeholder="&#9679;&#9679;&#9679;&#9679;">
+      </div>
+      <div id="pin-error" style="color:#ff6666;font-size:12px;margin-bottom:12px;min-height:18px;text-align:center"></div>
+      <button id="pin-confirm"
+        style="width:100%;padding:13px;background:#1a6b3a;color:white;border:none;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer">
+        Entrar &#10132;
+      </button>
+      <button id="pin-back"
+        style="width:100%;padding:10px;background:none;border:none;color:#5566aa;font-size:12px;cursor:pointer;margin-top:8px">
+        &#8592; Volver
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="sc-audit" class="screen">
+  <div class="audit-wrap" id="audit-container"></div>
+  <div style="height:68px"></div>
+</div>
+
+<div id="sc-compare" class="screen">
+  <div class="cmp-wrap" id="cmp-container"></div>
+  <div style="height:68px"></div>
+</div>
+
+<div class="modal-ov" id="modal">
+  <div class="modal-box">
+    <div class="modal-top">
+      <div>
+        <div class="modal-tit">Seleccionar Viviendas</div>
+        <div class="modal-sub" id="modal-sub"></div>
+      </div>
+      <button class="modal-x" id="modal-x">&#10005;</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-foot">
+      <div class="modal-sel"><span class="modal-n" id="modal-n">0</span> viviendas seleccionadas</div>
+      <button class="confirm-btn" id="modal-confirm">&#10003; Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar" id="bottom-bar" style="display:none">
+  <div class="nav-links">
+    <button class="nav-btn active" id="btn-nav-audit">&#128221; Partidas</button>
+    <button class="nav-btn" id="btn-nav-cmp">&#128202; Comparar</button>
+  </div>
+  <span class="save-st" id="save-st">Sin guardar</span>
+  <button class="save-btn" id="save-btn">&#128190; Guardar</button>
+</div>
+
+<script>
+var CHAPTERS = [{"id": "OP","titulo": "OBRAS PREVIAS","sections": [{"titulo": "LEV. TOPOGRAFIA Y TRAZADO","partidas": [{"id": 3,"nombre": "LEVANTAMIENTO TOPOGRAFÍA Y TRAZADO","inc": 0.059455164,"tipo": "pct"}]},{"titulo": "ESCARPE","partidas": [{"id": 5,"nombre": "ESCARPE","inc": 0.28888427,"tipo": "pct"}]},{"titulo": "CORTES - RELLENOS","partidas": [{"id": 7,"nombre": "CORTE-RELLENO","inc": 0.078004,"tipo": "pct"}]},{"titulo": "PLATAFORMAS","partidas": [{"id": 9,"nombre": "PLATAFORMAS","inc": 0.57365657,"tipo": "pct"}]}]},{"id": "VIV","titulo": "VIVIENDAS","groups": [{"titulo": "OBRA GRUESA","sections": [{"titulo": "OG - FUNDACIÓN","partidas": [{"id": 12,"nombre": "TRAZADO + INSTALACIÓN DE NIVELETAS","inc": 0.00230867,"tipo": "viv"},{"id": 13,"nombre": "EXCAVACIÓN + PERFILADO","inc": 0.00727181,"tipo": "viv"},{"id": 14,"nombre": "RECEPCIÓN SELLO","inc": 0.00038273,"tipo": "viv"},{"id": 15,"nombre": "EMPLANTILLADO","inc": 0.006747,"tipo": "viv"},{"id": 16,"nombre": "TRAZADO EN EMPLANTILLADO","inc": 0.00074967,"tipo": "viv"},{"id": 17,"nombre": "ARMADURA, TENSORES","inc": 0.00852953,"tipo": "viv"},{"id": 18,"nombre": "HORMIGÓN CIMIENTO","inc": 0.01712363,"tipo": "viv"},{"id": 19,"nombre": "TRAZADO SOBRECIMIENTO","inc": 0.00034992,"tipo": "viv"},{"id": 20,"nombre": "ENFIERRADURA SOBRECIMIENTO","inc": 0.00213238,"tipo": "viv"},{"id": 21,"nombre": "MOLDAJE SOBRECIMIENTO","inc": 0.00279933,"tipo": "viv"},{"id": 22,"nombre": "HORMIGÓN SOBRECIMIENTO","inc": 0.00292128,"tipo": "viv"},{"id": 23,"nombre": "DESCIMBRE MOLDAJE SOBRECIMIENTO","inc": 0.00034992,"tipo": "viv"},{"id": 24,"nombre": "INSTALACIÓN PLANTA ALCANTARILLADO","inc": 0.01184145,"tipo": "viv"},{"id": 25,"nombre": "AGUA POTABLE BAJO RADIER","inc": 0.0115651,"tipo": "viv"},{"id": 26,"nombre": "PRUEBAS ALCANTARILLADO","inc": 0.00105229,"tipo": "viv"},{"id": 27,"nombre": "PRUEBAS AGUA POTABLE","inc": 0.00059056,"tipo": "viv"},{"id": 28,"nombre": "RELLENO INTERIOR + CAMA DE RIPIO + POLIETILENO","inc": 0.00831855,"tipo": "viv"},{"id": 29,"nombre": "HORMIGÓN RADIER","inc": 0.0117481,"tipo": "viv"}]},{"titulo": "OG - MUROS Y LOSA PISO 1","partidas": [{"id": 31,"nombre": "TRAZADO MURO","inc": 0.00283015,"tipo": "viv"},{"id": 32,"nombre": "ENFIERRADURA MURO","inc": 0.01661787,"tipo": "viv"},{"id": 33,"nombre": "DISTRIBUCIÓN INSTALACIONES MURO","inc": 0.00304654,"tipo": "viv"},{"id": 34,"nombre": "PASADAS + VENTILACIÓN PASIVA Y EXTRACTOR","inc": 0.00555227,"tipo": "viv"},{"id": 35,"nombre": "MOLDAJE MUROS Y LOSA","inc": 0.02958367,"tipo": "viv"},{"id": 36,"nombre": "TRAZADO Y ENFIERRADURA LOSA","inc": 0.01554286,"tipo": "viv"},{"id": 37,"nombre": "INSTALACIÓN ELÉCTRICA-SANITARIA-PASADAS ALC LOSA","inc": 0.00259436,"tipo": "viv"},{"id": 38,"nombre": "REBALSE LOSA + JUNTA EN FRÍO","inc": 9.146e-05,"tipo": "viv"},{"id": 39,"nombre": "HORMIGONADO","inc": 0.04065762,"tipo": "viv"},{"id": 40,"nombre": "DESCIMBRE","inc": 0.00374477,"tipo": "viv"}]},{"titulo": "OG - MUROS H.A. PISO 2","partidas": [{"id": 42,"nombre": "TRAZADO MURO HA","inc": 0.00114748,"tipo": "viv"},{"id": 43,"nombre": "ENFIERRADURA MURO HA","inc": 0.00570708,"tipo": "viv"},{"id": 44,"nombre": "ARMADO DE ANDAMIOS","inc": 0.00057374,"tipo": "viv"},{"id": 45,"nombre": "DISTRIBUCIÓN ELÉCTRICA","inc": 0.0012251,"tipo": "viv"},{"id": 46,"nombre": "MOLDAJE MURO HA","inc": 0.00860606,"tipo": "viv"},{"id": 47,"nombre": "HORMIGONADO MURO HA","inc": 0.00813881,"tipo": "viv"},{"id": 48,"nombre": "DESCIMBRE MURO HA","inc": 0.00114748,"tipo": "viv"}]},{"titulo": "OG - MURO PERIMETRAL PISO 2","partidas": [{"id": 50,"nombre": "ARMADO DE ANDAMIO PERIMETRAL","inc": 0.00564985,"tipo": "viv"},{"id": 51,"nombre": "TRAZADO MURO PERIMETRAL","inc": 0.00427329,"tipo": "viv"},{"id": 52,"nombre": "ESTRUCTURA ACERO GALVANIZADO","inc": 0.02563973,"tipo": "viv"}]},{"titulo": "OG - TECHUMBRE PISO 2","partidas": [{"id": 54,"nombre": "ESTRUCTURA Y ARRIOSTRAMIENTOS","inc": 0.02874574,"tipo": "viv"},{"id": 55,"nombre": "FRONTÓN Y MURO CORTAFUEGO","inc": 0.00408711,"tipo": "viv"},{"id": 56,"nombre": "COLOCACIÓN FIELTRO + CUBIERTA","inc": 0.02020535,"tipo": "viv"}]},{"titulo": "OG - FORRO MURO PERIMETRAL PISO 2","partidas": [{"id": 58,"nombre": "INSTALACIÓN OSB + FIELTRO","inc": 0.01281987,"tipo": "viv"},{"id": 59,"nombre": "REVESTIMIENTO EXTERIOR SIDING","inc": 0.03136926,"tipo": "viv"},{"id": 60,"nombre": "MARCO VENTANAS","inc": 0.0031937,"tipo": "viv"},{"id": 61,"nombre": "HOJALATERÍA SIDING","inc": 0.00378138,"tipo": "viv"},{"id": 62,"nombre": "FORRO VENTANAS","inc": 0.00345631,"tipo": "viv"},{"id": 63,"nombre": "VENTILACIÓN PASIVA","inc": 0.00163774,"tipo": "viv"},{"id": 64,"nombre": "TAPACÁN C/PINTURA","inc": 0.00305067,"tipo": "viv"},{"id": 65,"nombre": "CELOSÍA VENTILACIÓN","inc": 0.000639,"tipo": "viv"},{"id": 66,"nombre": "COLOCACIÓN CANAL Y BAJADA ALL (2°PISO)","inc": 0.00378801,"tipo": "viv"},{"id": 67,"nombre": "ENTREGA OG A TG","inc": 0.00031686,"tipo": "viv"},{"id": 68,"nombre": "DESARME DE ANDAMIO","inc": 0.00376657,"tipo": "viv"}]}]},{"titulo": "TERMINACIONES GRUESAS","sections": [{"titulo": "TG - GRUPO 1","partidas": [{"id": 72,"nombre": "DESCARACHADO Y PULIDO","inc": 0.01234424,"tipo": "viv"},{"id": 73,"nombre": "TAPADO VAINAS","inc": 0.00027903,"tipo": "viv"},{"id": 74,"nombre": "TRAZADO RASGOS 1°PISO","inc": 0.00111611,"tipo": "viv"},{"id": 75,"nombre": "INSTALACIÓN REVESTIMIENTO TÉRMICO","inc": 0.0153777,"tipo": "viv"},{"id": 76,"nombre": "REMATE DE RASGOS VENTANAS Y PUERTAS","inc": 0.0029311,"tipo": "viv"},{"id": 77,"nombre": "IMPERMEABILIZACIÓN VANOS","inc": 0.00025395,"tipo": "viv"}]},{"titulo": "TG - GRUPO 2","partidas": [{"id": 79,"nombre": "FAJEO YESO MURO Y LOSA","inc": 0.0338235,"tipo": "viv"},{"id": 80,"nombre": "INSTALACIÓN ALFEIZAR","inc": 0.00311612,"tipo": "viv"},{"id": 81,"nombre": "REMATES Y CUADRATURAS DE YESO","inc": 0.01248674,"tipo": "viv"},{"id": 82,"nombre": "INSTALACIÓN ESCALA SIN BARANDA","inc": 0.01434752,"tipo": "viv"}]},{"titulo": "TG - GRUPO 3","partidas": [{"id": 84,"nombre": "INSTALACIÓN MARCO + PUERTA ACCESO Y COCINA","inc": 0.0109301,"tipo": "viv"},{"id": 85,"nombre": "INSTALACIÓN VENTANAS","inc": 0.0430995,"tipo": "viv"},{"id": 86,"nombre": "DISTRIBUCIÓN ELÉCTRICA M. PERIMETRAL","inc": 0.00081292,"tipo": "viv"},{"id": 87,"nombre": "AISLACIÓN + TAPADO 2DA CARA M. PERIMETRAL","inc": 0.0102223,"tipo": "viv"},{"id": 88,"nombre": "ESTRUCTURACIÓN CIELO","inc": 0.00456363,"tipo": "viv"},{"id": 89,"nombre": "INSTALACIÓN ELÉCTRICA CIELO","inc": 0.00201786,"tipo": "viv"},{"id": 90,"nombre": "AISLACIÓN + TAPADO CIELO","inc": 0.01123999,"tipo": "viv"}]},{"titulo": "TG - GRUPO 4","partidas": [{"id": 92,"nombre": "TRAZADO TABIQUES","inc": 0.00028683,"tipo": "viv"},{"id": 93,"nombre": "ESTRUCTURA TABIQUES 1a CARA","inc": 0.01296205,"tipo": "viv"},{"id": 94,"nombre": "SHAFT VERTICALES Y HORIZONTALES","inc": 0.00316966,"tipo": "viv"},{"id": 95,"nombre": "DESCARGA ALCANT. + DIST. AGUA POTABLE","inc": 0.0131123,"tipo": "viv"},{"id": 96,"nombre": "DISTRIBUCIÓN ELÉCTRICA","inc": 0.00413192,"tipo": "viv"},{"id": 97,"nombre": "PRUEBA DE PRESIÓN","inc": 0.00049213,"tipo": "viv"},{"id": 98,"nombre": "TAPADO TABIQUES 2a CARA + REFUERZOS","inc": 0.00887272,"tipo": "viv"},{"id": 99,"nombre": "IMPERMEABILIZACIÓN ZONAS HÚMEDAS","inc": 0.0001801,"tipo": "viv"}]},{"titulo": "TG - GRUPO 5","partidas": [{"id": 101,"nombre": "ESTRUCTURACIÓN TINA","inc": 0.00086864,"tipo": "viv"},{"id": 102,"nombre": "INSTALACIÓN TINAS","inc": 0.00582322,"tipo": "viv"},{"id": 103,"nombre": "INST. PUERTAS PRE COLGADAS","inc": 0.01113687,"tipo": "viv"},{"id": 104,"nombre": "CERÁMICOS DE PISO","inc": 0.01646395,"tipo": "viv"},{"id": 105,"nombre": "CERÁMICOS DE MUROS","inc": 0.00505036,"tipo": "viv"},{"id": 106,"nombre": "FRAGUE CERÁMICOS","inc": 0.00114109,"tipo": "viv"}]},{"titulo": "TG - GRUPO 6","partidas": [{"id": 108,"nombre": "INSTALACIÓN GUARDAPOLVOS","inc": 0.0053213,"tipo": "viv"},{"id": 109,"nombre": "COLOCACIÓN CORNISAS","inc": 0.00573207,"tipo": "viv"},{"id": 110,"nombre": "QUINCALLERÍA PUERTAS INTERIORES","inc": 0.0059533,"tipo": "viv"},{"id": 111,"nombre": "ENTREGA TG A TF","inc": 0.0001663,"tipo": "viv"}]}]},{"titulo": "TERMINACIONES FINAS","sections": [{"titulo": "TF - GRUPO 7","partidas": [{"id": 114,"nombre": "ALAMBRADO ELÉCTRICO","inc": 0.03022589,"tipo": "viv"},{"id": 115,"nombre": "TABLERO, MÓDULOS Y ARTEFACTOS ELÉCTRICOS","inc": 0.0111139,"tipo": "viv"}]},{"titulo": "TF - GRUPO 8","partidas": [{"id": 117,"nombre": "PINTURA 1a MANO CIELOS","inc": 0.00295175,"tipo": "viv"},{"id": 118,"nombre": "PINTURA LOSALÍN CIELOS (GRANO)","inc": 0.00545215,"tipo": "viv"},{"id": 119,"nombre": "PINTURA 1a MANO MUROS","inc": 0.00688742,"tipo": "viv"},{"id": 120,"nombre": "PINTURA 1a MANO ESCALA","inc": 0.00333858,"tipo": "viv"},{"id": 121,"nombre": "PINTURA 1a MANO PUERTAS Y GUARDAPOLVOS","inc": 0.00294542,"tipo": "viv"}]},{"titulo": "TF - GRUPO 9","partidas": [{"id": 123,"nombre": "PINTURA 2a MANO CIELOS","inc": 0.00295175,"tipo": "viv"},{"id": 124,"nombre": "PINTURA 2a MANO MUROS","inc": 0.00619868,"tipo": "viv"},{"id": 125,"nombre": "PINTURA 2a MANO PUERTAS Y GUARDAPOLVOS","inc": 0.00551897,"tipo": "viv"},{"id": 126,"nombre": "PINTURA 2a MANO ESCALA","inc": 0.00333858,"tipo": "viv"}]},{"titulo": "TF - GRUPO 10","partidas": [{"id": 128,"nombre": "INSTALACIÓN ARTEFACTOS SANITARIOS","inc": 0.00823643,"tipo": "viv"},{"id": 129,"nombre": "INSTALACIÓN DE CLOSET","inc": 0.01618985,"tipo": "viv"},{"id": 130,"nombre": "INSTALACIÓN MUEBLES DE COCINA","inc": 0.00559802,"tipo": "viv"},{"id": 131,"nombre": "INSTALACIÓN LAVAPLATOS","inc": 0.00296772,"tipo": "viv"},{"id": 132,"nombre": "COLOCACIÓN DE GRIFERÍAS","inc": 0.00141315,"tipo": "viv"}]},{"titulo": "TF - GRUPO 11","partidas": [{"id": 134,"nombre": "SELLO PARA PAPEL MURAL","inc": 0.00061388,"tipo": "viv"},{"id": 135,"nombre": "INSTALACIÓN PAPEL MURAL","inc": 0.01466207,"tipo": "viv"},{"id": 136,"nombre": "INSTALACIÓN PISO FLOTANTE","inc": 0.01567442,"tipo": "viv"},{"id": 137,"nombre": "BARANDAS DE ESCALA","inc": 0.00159417,"tipo": "viv"},{"id": 138,"nombre": "COLOCACIÓN TOPES DE PUERTA","inc": 0.00036885,"tipo": "viv"},{"id": 139,"nombre": "REMATES DE PINTURA","inc": 0.00068874,"tipo": "viv"},{"id": 140,"nombre": "SELLOS DE TERMINACIÓN","inc": 0.00245552,"tipo": "viv"},{"id": 141,"nombre": "ASEO FINO","inc": 0.00206499,"tipo": "viv"}]}]},{"titulo": "FACHADAS","sections": [{"titulo": "FACH - GRUPO 1","partidas": [{"id": 144,"nombre": "DESCARACHADO Y PULIDO (FACHADA)","inc": 0.00826453,"tipo": "viv"},{"id": 145,"nombre": "REMATES FACHADA","inc": 0.00595348,"tipo": "viv"}]},{"titulo": "FACH - GRUPO 2","partidas": [{"id": 147,"nombre": "INSTALACIÓN BAJADAS ALL (1°PISO)","inc": 0.00378801,"tipo": "viv"},{"id": 148,"nombre": "REMATE PINTURA FACHADA","inc": 0.02230354,"tipo": "viv"},{"id": 149,"nombre": "CELOSÍA VENTILACIÓN PASIVA","inc": 0.0006551,"tipo": "viv"},{"id": 150,"nombre": "GABINETE CALEFÓN","inc": 0.00305162,"tipo": "viv"}]}]},{"titulo": "EXTERIORES (PATIOS)","sections": [{"titulo": "EXT - GRUPO 1","partidas": [{"id": 153,"nombre": "CIERRO PLACA","inc": 0.01490673,"tipo": "viv"},{"id": 154,"nombre": "EMPAREJAMIENTO PATIO (GRUESO)","inc": 0.00579529,"tipo": "viv"},{"id": 155,"nombre": "INSTALACIÓN PASTELONES","inc": 0.00166345,"tipo": "viv"},{"id": 156,"nombre": "RED EXTERIOR GAS","inc": 0.01060463,"tipo": "viv"},{"id": 157,"nombre": "RADIER BALONES DE GAS","inc": 0.00017322,"tipo": "viv"},{"id": 158,"nombre": "RADIER LAVADERO","inc": 0.00031984,"tipo": "viv"},{"id": 159,"nombre": "INST. LAVADERO","inc": 0.00287852,"tipo": "viv"},{"id": 160,"nombre": "INSTALACIÓN REJA","inc": 0.0242003,"tipo": "viv"}]},{"titulo": "EXT - GRUPO 2","partidas": [{"id": 162,"nombre": "PINTURA REJA","inc": 0.00427064,"tipo": "viv"},{"id": 163,"nombre": "CALEFÓN","inc": 0.00650667,"tipo": "viv"},{"id": 164,"nombre": "REGULADOR DE GAS","inc": 0.00186794,"tipo": "viv"},{"id": 165,"nombre": "MEDIDOR ELÉCTRICO","inc": 0.01099233,"tipo": "viv"},{"id": 166,"nombre": "POSTE DE PASO ELÉCTRICO","inc": 0.00207928,"tipo": "viv"},{"id": 167,"nombre": "EMPALME ELÉCTRICO","inc": 0.00323694,"tipo": "viv"},{"id": 168,"nombre": "ASEO FINAL PATIO","inc": 0.00776308,"tipo": "viv"}]}]},{"titulo": "ENTREGA","sections": [],"partidas": [{"id": 170,"nombre": "LISTADO OBSERVACIONES DE CALIDAD","inc": 0.00352831,"tipo": "viv"},{"id": 171,"nombre": "OBTENCIÓN R1","inc": 0.00049506,"tipo": "viv"},{"id": 172,"nombre": "LISTADO OBSERVACIONES DE POSTVENTA","inc": 0.00148519,"tipo": "viv"},{"id": 173,"nombre": "OBTENCIÓN RF","inc": 0.00099013,"tipo": "viv"}]}]},{"id": "URB","titulo": "URBANIZACIÓN","sections": [{"titulo": "ALCANTARILLADO - TUBERÍA COLECTOR","partidas": [{"id": 177,"nombre": "ALC - TRAZADO","inc": 0.00153242,"tipo": "pct"},{"id": 178,"nombre": "ALC - EXCAVACIÓN","inc": 0.02366691,"tipo": "pct"},{"id": 179,"nombre": "ALC - ENCAMADO","inc": 0.00149607,"tipo": "pct"},{"id": 180,"nombre": "ALC - INSTALACIÓN TUBERÍA + UD","inc": 0.03051543,"tipo": "pct"},{"id": 181,"nombre": "ALC - RELLENO LATERAL E INICIAL","inc": 0.02842529,"tipo": "pct"},{"id": 182,"nombre": "ALC - PRUEBAS HERMETICIDAD","inc": 0.00512945,"tipo": "pct"},{"id": 183,"nombre": "ALC - RELLENO INTERMEDIO Y FINAL","inc": 0.01519135,"tipo": "pct"}]},{"titulo": "ALCANTARILLADO - CÁMARAS","partidas": [{"id": 185,"nombre": "ALC - CÁMARAS - EXCAVACIÓN","inc": 0.00387926,"tipo": "pct"},{"id": 186,"nombre": "ALC - CÁMARAS - RADIER BANQUETA","inc": 0.00652566,"tipo": "pct"},{"id": 187,"nombre": "ALC - CÁMARAS - INSTALACIÓN MÓDULOS","inc": 0.00359541,"tipo": "pct"},{"id": 188,"nombre": "ALC - CÁMARAS - RELLENOS","inc": 0.00089885,"tipo": "pct"},{"id": 189,"nombre": "ALC - CÁMARAS - LOSA","inc": 0.00258644,"tipo": "pct"},{"id": 190,"nombre": "CÁMARA DOMICILIARIA ALCANTARILLADO","inc": 0.00568968,"tipo": "pct"},{"id": 191,"nombre": "BANQUETA + AFINADO","inc": 0.00080819,"tipo": "pct"}]},{"titulo": "AGUAS LLUVIA - TUBERÍA","partidas": [{"id": 194,"nombre": "ALL - TUBERÍA - TRAZADO","inc": 0.00115639,"tipo": "pct"},{"id": 195,"nombre": "ALL - TUBERÍA - EXCAVACIÓN","inc": 0.02431382,"tipo": "pct"},{"id": 196,"nombre": "ALL - TUBERÍA - ENCAMADO","inc": 0.00151856,"tipo": "pct"},{"id": 197,"nombre": "ALL - TUBERÍA - INSTALACIÓN + CRUCE","inc": 0.05190382,"tipo": "pct"},{"id": 198,"nombre": "ALL - TUBERÍA - RELLENO LATERAL E INICIAL","inc": 0.02885269,"tipo": "pct"},{"id": 199,"nombre": "ALL - TUBERÍA - RELLENO INTERMEDIO Y FINAL","inc": 0.0188689,"tipo": "pct"}]},{"titulo": "AGUAS LLUVIA - CÁMARAS","partidas": [{"id": 201,"nombre": "ALL - CÁMARAS - EXCAVACIÓN","inc": 0.00184493,"tipo": "pct"},{"id": 202,"nombre": "ALL - CÁMARAS - RADIER BANQUETA","inc": 0.00122995,"tipo": "pct"},{"id": 203,"nombre": "ALL - CÁMARAS - INSTALACIÓN MÓDULOS","inc": 0.00960485,"tipo": "pct"},{"id": 204,"nombre": "ALL - CÁMARAS - RELLENOS","inc": 0.00307488,"tipo": "pct"}]},{"titulo": "AGUAS LLUVIA - SUMIDERO","partidas": [{"id": 206,"nombre": "SUMIDERO - EXCAVACIÓN","inc": 0.00330957,"tipo": "pct"},{"id": 207,"nombre": "SUMIDERO - EMPLANTILLADO","inc": 0.00220638,"tipo": "pct"},{"id": 208,"nombre": "SUMIDERO - ENFIERRADURA","inc": 0.00330957,"tipo": "pct"},{"id": 209,"nombre": "SUMIDERO - MOLDAJE","inc": 0.00264766,"tipo": "pct"},{"id": 210,"nombre": "SUMIDERO - HORMIGÓN","inc": 0.00882552,"tipo": "pct"},{"id": 211,"nombre": "SUMIDERO - REJILLA","inc": 0.00767641,"tipo": "pct"}]},{"titulo": "AGUA POTABLE","partidas": [{"id": 213,"nombre": "AP - EXCAVACIÓN","inc": 0.01458,"tipo": "pct"},{"id": 214,"nombre": "AP - ENCAMADO","inc": 0.0027934,"tipo": "pct"},{"id": 215,"nombre": "AP - INSTALACIÓN TUBERÍA + ARRANQUE","inc": 0.01984448,"tipo": "pct"},{"id": 216,"nombre": "AP - CÁMARA DE VÁLVULA","inc": 0.01050513,"tipo": "pct"},{"id": 217,"nombre": "AP - PRUEBA DE PRESIÓN","inc": 0.00062895,"tipo": "pct"},{"id": 218,"nombre": "AP - RELLENO LATERAL E INICIAL","inc": 0.01303586,"tipo": "pct"},{"id": 219,"nombre": "AP - RELLENO INTERMEDIO Y FINAL","inc": 0.00424536,"tipo": "pct"},{"id": 220,"nombre": "ARRANQUE A. POTABLE (VIVIENDAS)","inc": 0.01099802,"tipo": "pct"},{"id": 221,"nombre": "INSTALACIÓN MEDIDORES A. POTABLE","inc": 0.00144262,"tipo": "pct"}]},{"titulo": "DREN","partidas": [{"id": 224,"nombre": "DREN - EXCAVACIÓN","inc": 0.02804862,"tipo": "pct"},{"id": 225,"nombre": "DREN - GEOTEXTIL","inc": 0.00276021,"tipo": "pct"},{"id": 226,"nombre": "DREN - CUBO DREN","inc": 0.00087454,"tipo": "pct"},{"id": 227,"nombre": "DREN - RELLENO SOBRE CUBO (GRAVA)","inc": 0.00204059,"tipo": "pct"},{"id": 228,"nombre": "DREN - INSTALACIÓN TUBO RANURADO","inc": 0.12430754,"tipo": "pct"},{"id": 229,"nombre": "DREN - RELLENO ESTABILIZADO","inc": 0.03107688,"tipo": "pct"},{"id": 230,"nombre": "DREN - RELLENO TIERRA SOBRE DREN","inc": 0.01025625,"tipo": "pct"}]},{"titulo": "DREN - CÁMARAS DECANTADORA","partidas": [{"id": 232,"nombre": "CÁM. DECANTADORA - EXCAVACIÓN","inc": 0.00026966,"tipo": "pct"},{"id": 233,"nombre": "CÁM. DECANTADORA - EMPLANTILLADO","inc": 0.00040448,"tipo": "pct"},{"id": 234,"nombre": "CÁM. DECANTADORA - ENFIERRADURA LOSA INF.","inc": 0.00045841,"tipo": "pct"},{"id": 235,"nombre": "CÁM. DECANTADORA - HORMIGÓN LOSA INF.","inc": 0.00067414,"tipo": "pct"},{"id": 236,"nombre": "CÁM. DECANTADORA - FIERRO Y MOLDAJE MURO","inc": 0.00040448,"tipo": "pct"},{"id": 237,"nombre": "CÁM. DECANTADORA - FIERRO LOSA SUPERIOR","inc": 0.00013483,"tipo": "pct"},{"id": 238,"nombre": "CÁM. DECANTADORA - HORMIGÓN MURO Y LOSA","inc": 0.00035055,"tipo": "pct"}]},{"titulo": "DREN - CÁMARAS DE LIMPIEZA","partidas": [{"id": 240,"nombre": "CÁM. LIMPIEZA - EXCAVACIÓN","inc": 0.00013483,"tipo": "pct"},{"id": 241,"nombre": "CÁM. LIMPIEZA - EMPLANTILLADO","inc": 8.989e-05,"tipo": "pct"},{"id": 242,"nombre": "CÁM. LIMPIEZA - ENFIERRADURA LOSA INF.","inc": 0.00013483,"tipo": "pct"},{"id": 243,"nombre": "CÁM. LIMPIEZA - ALBAÑILERÍA","inc": 0.00026966,"tipo": "pct"},{"id": 244,"nombre": "CÁM. LIMPIEZA - FIERRO LOSA SUPERIOR","inc": 4.494e-05,"tipo": "pct"},{"id": 245,"nombre": "CÁM. LIMPIEZA - HORMIGÓN LOSA","inc": 0.00022471,"tipo": "pct"}]},{"titulo": "PAVIMENTACIÓN - SUB BASE Y HOR.","partidas": [{"id": 248,"nombre": "PREPARACIÓN RELLENO Y COMPACTACIÓN SUB-BASE","inc": 0.00903623,"tipo": "pct"},{"id": 249,"nombre": "INSTALACIÓN SOLERAS CALLE-PASAJES","inc": 0.03243398,"tipo": "pct"},{"id": 250,"nombre": "COMPACTACIÓN BASE CALLE","inc": 0.01738066,"tipo": "pct"},{"id": 251,"nombre": "COMPACTACIÓN BASE PASAJES","inc": 0.03439477,"tipo": "pct"}]},{"titulo": "PAVIMENTACIÓN - VEREDA","partidas": [{"id": 253,"nombre": "VEREDA - PREPARACIÓN SUB-RASANTE","inc": 0.00066373,"tipo": "pct"},{"id": 254,"nombre": "VEREDA - RELLENO BASE GRANULAR","inc": 0.00376112,"tipo": "pct"},{"id": 255,"nombre": "VEREDA - MOLDAJE","inc": 0.00234234,"tipo": "pct"},{"id": 256,"nombre": "VEREDA - HORMIGONADO","inc": 0.02504702,"tipo": "pct"},{"id": 257,"nombre": "VEREDA - CORTE","inc": 0.0007027,"tipo": "pct"}]},{"titulo": "PAVIMENTO HORMIGÓN TRAMO 1","partidas": [{"id": 259,"nombre": "TRAMO 1 - RECTIFICACIÓN CANCHA","inc": 0.00346302,"tipo": "pct"},{"id": 260,"nombre": "TRAMO 1 - SELLADO","inc": 0.00299533,"tipo": "pct"},{"id": 261,"nombre": "TRAMO 1 - HORMIGONADO","inc": 0.14677096,"tipo": "pct"}]},{"titulo": "PAVIMENTO HORMIGÓN TRAMO 2","partidas": [{"id": 263,"nombre": "TRAMO 2 - RECTIFICACIÓN CANCHA","inc": 0.00346302,"tipo": "pct"},{"id": 264,"nombre": "TRAMO 2 - IMPRIMACIÓN","inc": 0.00160861,"tipo": "pct"},{"id": 265,"nombre": "TRAMO 2 - HORMIGONADO","inc": 0.07882198,"tipo": "pct"}]},{"titulo": "POSTACIÓN Y LUMINARIA","partidas": [{"id": 268,"nombre": "POSTACIÓN - EXCAVACIÓN","inc": 0.00666702,"tipo": "pct"},{"id": 269,"nombre": "POSTACIÓN - INSTALACIÓN DE POSTE","inc": 0.00806464,"tipo": "pct"},{"id": 271,"nombre": "LUMINARIA + CABLEADO","inc": 0.06000322,"tipo": "pct"}]}]},{"id": "EQ","titulo": "EQUIPAMIENTO","sections": [{"titulo": "LOCAL COMERCIAL A/1","partidas": [{"id": 275,"nombre": "LOCAL A/1 - OBRA GRUESA","inc": 0.02159099,"tipo": "pct"},{"id": 276,"nombre": "LOCAL A/1 - TERMINACIONES GRUESAS","inc": 0.00695975,"tipo": "pct"},{"id": 277,"nombre": "LOCAL A/1 - TERMINACIONES FINAS","inc": 0.00652509,"tipo": "pct"},{"id": 278,"nombre": "LOCAL A/1 - FACHADAS","inc": 0.00104791,"tipo": "pct"},{"id": 279,"nombre": "LOCAL A/1 - EXTERIORES","inc": 0.02094562,"tipo": "pct"},{"id": 280,"nombre": "LOCAL A/1 - ENTREGA","inc": 0.00115538,"tipo": "pct"}]},{"titulo": "LOCAL COMERCIAL A/2","partidas": [{"id": 282,"nombre": "LOCAL A/2 - OBRA GRUESA","inc": 0.02159099,"tipo": "pct"},{"id": 283,"nombre": "LOCAL A/2 - TERMINACIONES GRUESAS","inc": 0.00695975,"tipo": "pct"},{"id": 284,"nombre": "LOCAL A/2 - TERMINACIONES FINAS","inc": 0.00652509,"tipo": "pct"},{"id": 285,"nombre": "LOCAL A/2 - FACHADAS","inc": 0.00104791,"tipo": "pct"},{"id": 286,"nombre": "LOCAL A/2 - EXTERIORES","inc": 0.02094562,"tipo": "pct"},{"id": 287,"nombre": "LOCAL A/2 - ENTREGA","inc": 0.00115538,"tipo": "pct"}]},{"titulo": "CASA MOVILIDAD REDUCIDA","partidas": [{"id": 289,"nombre": "CASA MINUSVÁLIDO - OBRA GRUESA","inc": 0.033671,"tipo": "pct"},{"id": 290,"nombre": "CASA MINUSVÁLIDO - TERMINACIONES GRUESAS","inc": 0.02745168,"tipo": "pct"},{"id": 291,"nombre": "CASA MINUSVÁLIDO - TERMINACIONES FINAS","inc": 0.01273388,"tipo": "pct"},{"id": 292,"nombre": "CASA MINUSVÁLIDO - FACHADAS","inc": 0.00083833,"tipo": "pct"},{"id": 293,"nombre": "CASA MINUSVÁLIDO - EXTERIORES","inc": 0.00806171,"tipo": "pct"},{"id": 294,"nombre": "CASA MINUSVÁLIDO - ENTREGA","inc": 0.00036035,"tipo": "pct"}]},{"titulo": "SALA MULTIUSO","partidas": [{"id": 296,"nombre": "SALA MULTIUSO - OBRA GRUESA","inc": 0.09449263,"tipo": "pct"},{"id": 297,"nombre": "SALA MULTIUSO - TERMINACIONES GRUESAS","inc": 0.04239741,"tipo": "pct"},{"id": 298,"nombre": "SALA MULTIUSO - TERMINACIONES FINAS","inc": 0.01649836,"tipo": "pct"},{"id": 299,"nombre": "SALA MULTIUSO - FACHADAS","inc": 0.00104791,"tipo": "pct"},{"id": 300,"nombre": "SALA MULTIUSO - EXTERIORES","inc": 0.0136112,"tipo": "pct"},{"id": 301,"nombre": "SALA MULTIUSO - ENTREGA","inc": 0.00583638,"tipo": "pct"}]},{"titulo": "ÁREAS VERDES","partidas": [{"id": 303,"nombre": "ÁREAS VERDES - TRAZADO Y NIVELES","inc": 0.02402659,"tipo": "pct"},{"id": 304,"nombre": "ÁREAS VERDES - PREPARACIÓN CANCHA","inc": 0.0070765,"tipo": "pct"},{"id": 305,"nombre": "ÁREAS VERDES - SOLERILLAS","inc": 0.01508136,"tipo": "pct"},{"id": 306,"nombre": "ÁREAS VERDES - PAVIMENTOS","inc": 0.11779327,"tipo": "pct"},{"id": 307,"nombre": "ÁREAS VERDES - SENDERO MAICILLO","inc": 0.00294534,"tipo": "pct"},{"id": 308,"nombre": "ÁREAS VERDES - EQUIPAMIENTO","inc": 0.25337906,"tipo": "pct"},{"id": 309,"nombre": "ÁREAS VERDES - INSTALACIÓN ÁRBOLES","inc": 0.05478814,"tipo": "pct"},{"id": 310,"nombre": "ÁREAS VERDES - CUBRESUELOS","inc": 0.00078259,"tipo": "pct"},{"id": 311,"nombre": "ÁREAS VERDES - ASEO Y LIMPIEZA","inc": 0.00393214,"tipo": "pct"}]},{"titulo": "SEÑALÉTICA","partidas": [{"id": 313,"nombre": "PINTURA DEMARCACIONES","inc": 0.05769531,"tipo": "pct"},{"id": 314,"nombre": "SEÑALÉTICAS VERTICALES","inc": 0.05101996,"tipo": "pct"},{"id": 315,"nombre": "CERTIFICADO","inc": 0.00104791,"tipo": "pct"}]},{"titulo": "SALA DE RECICLAJE","partidas": [{"id": 317,"nombre": "SALA RECICLAJE - OBRA GRUESA","inc": 0.01763238,"tipo": "pct"},{"id": 318,"nombre": "SALA RECICLAJE - TERMINACIONES GRUESAS","inc": 0.01448455,"tipo": "pct"},{"id": 319,"nombre": "SALA RECICLAJE - TERMINACIONES FINAS","inc": 0.00426135,"tipo": "pct"},{"id": 320,"nombre": "SALA RECICLAJE - ENTREGA","inc": 0.00060327,"tipo": "pct"}]}]}];
+var MANZANAS = {"A": {"1": "vul","2": "vul","3": "sm1","4": "sm1","5": "vul","6": "vul","7": "sm1","8": "sm1","9": "vul","10": "vul","11": "emer","12": "emer","13": "vul","14": "vul","15": "emer","16": "emer","17": "sm1","18": "sm1","19": "vul","20": "vul","21": "emer","22": "emer","23": "vul","24": "vul","25": "emer","26": "emer","27": "sm2","28": "sm2","29": "emer","30": "emer","31": "sm2","32": "sm2"},"B": {"1": "sm2","2": "sm2","3": "vul","4": "vul","5": "sm1","6": "sm1","7": "sm2","8": "sm2","9": "sm1","10": "sm1","11": "sm2","12": "sm2","13": "sm2","14": "sm2","15": "emer","16": "emer","17": "vul","18": "vul","19": "sm1","20": "sm1","21": "sm1","22": "sm1","23": "sm2","24": "sm2"},"C": {"1": "sm2","2": "sm2","3": "vul","4": "vul","5": "sm1","6": "sm1","7": "sm1","8": "sm1","9": "sm2","10": "sm2","11": "sm2","12": "sm2","13": "emer","14": "emer","15": "vul","16": "vul","17": "sm1","18": "sm1","19": "sm2","20": "sm2"},"D": {"1": "sm1","2": "sm1","3": "vul","4": "vul","5": "emer","6": "emer","7": "vul","8": "vul","9": "sm1","10": "sm1","11": "sm2","12": "sm2","13": "sm1","14": "sm1","15": "vul","16": "vul","17": "sm1","18": "sm1"},"E": {"1": "sm1","2": "sm1","3": "sm1","4": "sm1","5": "sm2","6": "sm2","7": "sm2","8": "sm2","9": "sm2","10": "sm2"},"F": {"1": "sm2","2": "sm2","3": "vul","4": "vul","5": "emer","6": "emer","7": "vul","8": "vul","9": "sm1","10": "sm1","11": "emer","12": "emer","13": "vul","14": "vul","15": "sm1","16": "sm1","17": "sm2","18": "sm2","19": "sm2","20": "sm2","21": "vul","22": "vul","23": "sm1","24": "sm1","25": "emer","26": "emer","27": "sm1","28": "sm1","29": "vul","30": "vul","31": "emer","32": "emer","33": "sm1","34": "sm1","35": "sm2","36": "sm2"},"G": {"1": "sm2","2": "sm2","3": "sm2","4": "sm2","5": "emer","6": "emer","7": "sm1","8": "sm1","9": "sm1","10": "sm1","11": "vul","12": "vul","13": "sm1","14": "sm1","15": "sm2","16": "sm2","17": "vul","18": "vul","19": "sm1","20": "sm1","21": "vul","22": "vul","23": "sm1","24": "sm1","25": "emer","26": "vul","27": "sm2","28": "sm2"},"H": {"1": "sm2","2": "sm2","3": "vul","4": "vul","5": "emer","6": "emer","7": "vul","8": "vul","9": "sm1","10": "sm1","11": "vul","12": "vul","13": "sm2","14": "sm2"},"J": {"1": "sm2","2": "sm2","3": "sm2","4": "sm2","5": "sm1","6": "sm1","7": "sm2","8": "sm2","9": "sm1","10": "sm1","11": "sm2","12": "sm2","13": "sm2","14": "sm2","15": "sm1","16": "sm1","17": "emer","18": "emer","19": "vul","20": "vul","21": "emer","22": "emer","23": "vul","24": "vul","25": "sm2","26": "sm2"},"K": {"1": "sm2","2": "sm2","3": "sm2","4": "sm2","5": "mov","6": "sm2","7": "sm2"}};
+
+// ---- CONFIG ----
+var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwZr2aE9Mv7As6gPi0mzoEqM1UgvMKZreBYgWCYdr9yA5989gs88429I24RXvSLb2YcHg/exec';
+var CURRENT_SEMANA = '';
+
+var DATA = {jt:{}, cal:{}};
+var ROLE = null;
+var MODAL_PID = null;
+var MODAL_BUILT = false;
+var MODAL_SEL = [];
+
+// ---- INIT: carga semana actual (endpoint ligero, sin partidas) ----
+(function initSemana() {
+  var done = false;
+  var fallback = setTimeout(function() {
+    if (!done) { done = true; document.getElementById('week-pill').textContent = '📅 (sin conexión)'; }
+  }, 6000);
+  fetch(SCRIPT_URL + '?action=getSemanaActual&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (done) return; done = true; clearTimeout(fallback);
+      if (d && d.ok && d.semana) {
+        CURRENT_SEMANA = d.semana;
+        document.getElementById('week-pill').textContent = '📅 ' + d.semana;
+      } else {
+        document.getElementById('week-pill').textContent = '📅 (sin semana activa)';
+      }
+    })
+    .catch(function(){
+      if (done) return; done = true; clearTimeout(fallback);
+      document.getElementById('week-pill').textContent = '📅 (sin conexión)';
+    });
+})();
+
+// ---- HELPERS ----
+function hasVal(role, pid) {
+  var v = DATA[role][pid];
+  if (v === undefined || v === null) return false;
+  return Array.isArray(v) ? v.length > 0 : true;
+}
+function getPartidas(ch) {
+  var r = [];
+  (ch.groups || []).forEach(function(g) {
+    (g.sections || []).forEach(function(s) { r = r.concat(s.partidas || []); });
+    r = r.concat(g.partidas || []);
+  });
+  (ch.sections || []).forEach(function(s) { r = r.concat(s.partidas || []); });
+  r = r.concat(ch.partidas || []);
+  return r;
+}
+function countFilled(partidas, role) {
+  return partidas.filter(function(p) { return hasVal(role, p.id); }).length;
+}
+
+// ---- SCREENS ----
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById(id).classList.add('active');
+}
+
+// ---- ROLE ----
+function enterAs(role) {
+  ROLE = role;
+  var rb = document.getElementById('role-badge');
+  if (role === 'jt')  { rb.textContent = '👷 Jefe de Terreno'; rb.className = 'role-badge rb-jt'; }
+  else if (role === 'cal') { rb.textContent = '📋 Calidad'; rb.className = 'role-badge rb-cal'; }
+  else { rb.textContent = '🔍 Comparación'; rb.className = 'role-badge rb-gaby'; }
+  rb.style.display = '';
+  document.getElementById('btn-logout').style.display = '';
+  document.getElementById('prog-wrap').style.display = '';
+  document.getElementById('bottom-bar').style.display = '';
+  var navAudit = document.getElementById('btn-nav-audit');
+  var navCmp = document.getElementById('btn-nav-cmp');
+  if (role === 'gaby') { navAudit.style.display = 'none'; navCmp.style.display = ''; }
+  else { navAudit.style.display = ''; navCmp.style.display = 'none'; }
+
+  // Cargar datos existentes desde el Sheet, luego mostrar pantalla
+  var st = document.getElementById('save-st');
+  st.textContent = 'Cargando datos…'; st.style.color = '#8899bb';
+  var sem = CURRENT_SEMANA || '';
+
+  var loaded = false;
+  function doLoad() {
+    if (loaded) return; loaded = true;
+    afterLoad(role);
+  }
+  // Timeout: si el fetch no responde en 6s, entrar igual con datos vacíos
+  var timeout = setTimeout(function() {
+    st.textContent = 'Sin conexión — datos locales';
+    st.style.color = '#cc8822';
+    doLoad();
+  }, 6000);
+
+  fetch(SCRIPT_URL + '?action=getAuditSemana&semana=' + encodeURIComponent(sem) + '&_=' + Date.now())
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      clearTimeout(timeout);
+      if (d && d.ok) {
+        if (d.jt)  DATA.jt  = normalizeData(d.jt);
+        if (d.cal) DATA.cal = normalizeData(d.cal);
+      }
+      st.textContent = sem ? 'Datos semana ' + sem + ' cargados' : 'Sin semana activa';
+      st.style.color = '#1a9b5a';
+      doLoad();
+    })
+    .catch(function(){
+      clearTimeout(timeout);
+      st.textContent = 'Sin conexión — datos locales';
+      st.style.color = '#cc8822';
+      doLoad();
+    });
+}
+
+// Los datos del Sheet vienen con claves como strings; convertir arrays de JSON
+function normalizeData(obj) {
+  var out = {};
+  Object.keys(obj).forEach(function(k) {
+    var v = obj[k];
+    out[parseInt(k)] = v;  // arrays: strings like "D-5"; numbers: pct values
+  });
+  return out;
+}
+
+function afterLoad(role) {
+  if (role === 'gaby') {
+    showCompare();
+  } else {
+    renderAudit();
+    showScreen('sc-audit');
+    updateProgress();
+    setTimeout(function() {
+      var firstCh = document.querySelector('.ch-body');
+      var firstArr = document.querySelector('.ch-arr');
+      if (firstCh) { firstCh.classList.add('open'); firstArr.classList.add('open'); }
+      var firstGrp = document.querySelector('.grp-body');
+      var firstGArr = document.querySelector('.grp-arr');
+      if (firstGrp) { firstGrp.classList.add('open'); firstGArr.classList.add('open'); }
+      var firstSec = document.querySelector('.sec-body');
+      var firstSArr = document.querySelector('.sec-arr');
+      if (firstSec) { firstSec.classList.add('open'); firstSArr.classList.add('open'); }
+    }, 10);
+  }
+}
+
+// ---- PINS ----
+// JT: 0925 · CAL: 1472 · GABY (comparación): 0525
+var PINS = { jt: '0925', cal: '1472', gaby: '0525' };
+var PENDING_ROLE = null;
+
+function goToPin(role) {
+  PENDING_ROLE = role;
+  var labels = { jt: '👷 Jefe de Terreno', cal: '📋 Calidad', gaby: '🔍 Comparación' };
+  document.getElementById('pin-title').textContent = labels[role];
+  var sem = CURRENT_SEMANA ? 'Semana ' + CURRENT_SEMANA : 'Ingresa tu PIN de acceso';
+  document.getElementById('pin-semana').textContent = sem;
+  document.getElementById('pin-input').value = '';
+  document.getElementById('pin-error').textContent = '';
+  showScreen('sc-pin');
+  setTimeout(function() { document.getElementById('pin-input').focus(); }, 100);
+}
+
+function checkPin() {
+  var entered = document.getElementById('pin-input').value;
+  if (entered === PINS[PENDING_ROLE]) {
+    document.getElementById('pin-error').textContent = '';
+    enterAs(PENDING_ROLE);
+  } else {
+    document.getElementById('pin-error').textContent = 'PIN incorrecto. Intenta nuevamente.';
+    document.getElementById('pin-input').value = '';
+    document.getElementById('pin-input').focus();
+  }
+}
+
+document.getElementById('btn-jt').addEventListener('click', function() { goToPin('jt'); });
+document.getElementById('btn-cal').addEventListener('click', function() { goToPin('cal'); });
+document.getElementById('btn-gaby').addEventListener('click', function() { goToPin('gaby'); });
+document.getElementById('pin-confirm').addEventListener('click', checkPin);
+document.getElementById('pin-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkPin();
+});
+document.getElementById('pin-back').addEventListener('click', function() { showScreen('sc-login'); });
+document.getElementById('btn-logout').addEventListener('click', function() {
+  ROLE = null;
+  document.getElementById('role-badge').style.display = 'none';
+  document.getElementById('btn-logout').style.display = 'none';
+  document.getElementById('prog-wrap').style.display = 'none';
+  document.getElementById('bottom-bar').style.display = 'none';
+  showScreen('sc-login');
+});
+document.getElementById('btn-nav-audit').addEventListener('click', function() {
+  showScreen('sc-audit');
+  document.getElementById('btn-nav-audit').classList.add('active');
+  document.getElementById('btn-nav-cmp').classList.remove('active');
+});
+document.getElementById('btn-nav-cmp').addEventListener('click', function() {
+  showCompare();
+});
+document.getElementById('save-btn').addEventListener('click', doSave);
+document.getElementById('modal-x').addEventListener('click', closeModal);
+document.getElementById('modal-confirm').addEventListener('click', confirmModal);
+
+// ---- RENDER AUDIT ----
+function renderAudit() {
+  var con = document.getElementById('audit-container');
+  con.innerHTML = '';
+  CHAPTERS.forEach(function(ch, ci) {
+    con.appendChild(buildChapter(ch, ci));
+  });
+}
+
+function makeEl(tag, cls, id) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (id) e.id = id;
+  return e;
+}
+
+function buildChapter(ch, ci) {
+  var allP = getPartidas(ch);
+  var filled = countFilled(allP, ROLE);
+  var pct = allP.length ? Math.round(filled / allP.length * 100) : 0;
+
+  var div = makeEl('div', 'chapter');
+  var hdr = makeEl('div', 'ch-hdr');
+  var arr = makeEl('span', 'ch-arr');
+  arr.textContent = '▶'; hdr.appendChild(arr);
+  var nm = makeEl('span', 'ch-name'); nm.textContent = ch.titulo; hdr.appendChild(nm);
+  var st = makeEl('span', 'ch-stats', 'ch-st-' + ci); st.textContent = filled + '/' + allP.length; hdr.appendChild(st);
+  var bar = makeEl('div', 'ch-bar'); var bf = makeEl('div', 'ch-bar-fill'); bf.id = 'ch-bf-' + ci; bf.style.width = pct + '%'; bar.appendChild(bf); hdr.appendChild(bar);
+
+  var body = makeEl('div', 'ch-body', 'ch-body-' + ci);
+  hdr.addEventListener('click', function() { toggle(body, arr); });
+
+  if (ch.groups) {
+    ch.groups.forEach(function(g, gi) { body.appendChild(buildGroup(g, ci, gi)); });
+  } else {
+    (ch.sections || []).forEach(function(s, si) { body.appendChild(buildSection(s, ci, -1, si)); });
+    (ch.partidas || []).forEach(function(p) { body.appendChild(buildPartidaRow(p, true)); });
+  }
+  div.appendChild(hdr); div.appendChild(body);
+  return div;
+}
+
+function buildGroup(g, ci, gi) {
+  var allP = [];
+  (g.sections || []).forEach(function(s) { allP = allP.concat(s.partidas || []); });
+  allP = allP.concat(g.partidas || []);
+  var filled = countFilled(allP, ROLE);
+  var pct = allP.length ? Math.round(filled / allP.length * 100) : 0;
+
+  var div = makeEl('div', 'group');
+  var hdr = makeEl('div', 'grp-hdr');
+  var arr = makeEl('span', 'grp-arr'); arr.textContent = '▶'; hdr.appendChild(arr);
+  var nm = makeEl('span', 'grp-name'); nm.textContent = g.titulo; hdr.appendChild(nm);
+  var st = makeEl('span', 'grp-stats', 'grp-st-' + ci + '-' + gi); st.textContent = filled + '/' + allP.length; hdr.appendChild(st);
+  var bar = makeEl('div', 'grp-bar'); var bf = makeEl('div', 'grp-bar-fill'); bf.id = 'grp-bf-' + ci + '-' + gi; bf.style.width = pct + '%'; bar.appendChild(bf); hdr.appendChild(bar);
+
+  var body = makeEl('div', 'grp-body', 'grp-body-' + ci + '-' + gi);
+  hdr.addEventListener('click', function() { toggle(body, arr); });
+
+  (g.sections || []).forEach(function(s, si) { body.appendChild(buildSection(s, ci, gi, si)); });
+  (g.partidas || []).forEach(function(p) { body.appendChild(buildPartidaRow(p, true)); });
+
+  div.appendChild(hdr); div.appendChild(body);
+  return div;
+}
+
+function buildSection(s, ci, gi, si) {
+  var partidas = s.partidas || [];
+  var filled = countFilled(partidas, ROLE);
+  var pct = partidas.length ? Math.round(filled / partidas.length * 100) : 0;
+  var key = ci + '-' + gi + '-' + si;
+
+  var div = makeEl('div', 'section');
+  var hdr = makeEl('div', 'sec-hdr');
+  var arr = makeEl('span', 'sec-arr'); arr.textContent = '▶'; hdr.appendChild(arr);
+  var nm = makeEl('span', 'sec-name'); nm.textContent = s.titulo; hdr.appendChild(nm);
+  var cnt = makeEl('span', 'sec-count', 'sec-st-' + key); cnt.textContent = filled + '/' + partidas.length; hdr.appendChild(cnt);
+  var bar = makeEl('div', 'sec-bar'); var bf = makeEl('div', 'sec-bar-fill'); bf.id = 'sec-bf-' + key; bf.style.width = pct + '%'; bar.appendChild(bf); hdr.appendChild(bar);
+
+  var body = makeEl('div', 'sec-body', 'sec-body-' + key);
+  hdr.addEventListener('click', function() { toggle(body, arr); });
+  partidas.forEach(function(p) { body.appendChild(buildPartidaRow(p, false)); });
+
+  div.appendChild(hdr); div.appendChild(body);
+  return div;
+}
+
+function buildPartidaRow(p, isDirect) {
+  var val = DATA[ROLE] ? DATA[ROLE][p.id] : undefined;
+  var filled = hasVal(ROLE, p.id);
+
+  var row = makeEl('div', 'p-row' + (filled ? ' filled' : '') + (isDirect ? ' direct' : ''));
+  row.id = 'row-' + p.id;
+
+  var dot = makeEl('span', 'p-dot ' + (filled ? 'done' : 'empty')); row.appendChild(dot);
+  var num = makeEl('span', 'p-num'); num.textContent = p.id; row.appendChild(num);
+  var nm = makeEl('span', 'p-name'); nm.textContent = p.nombre; row.appendChild(nm);
+  var inc = makeEl('span', 'p-inc'); inc.textContent = (p.inc * 100).toFixed(2) + '%'; row.appendChild(inc);
+
+  var inp = makeEl('div', 'p-inp'); row.appendChild(inp);
+
+  if (p.tipo === 'viv') {
+    var cnt = Array.isArray(val) ? val.length : 0;
+    var btn = makeEl('button', 'viv-btn' + (cnt > 0 ? ' filled' : ''));
+    btn.id = 'vb-' + p.id;
+    btn.innerHTML = '&#127968; Loteo' + (cnt > 0 ? '<span class="viv-cnt">' + cnt + '</span>' : '');
+    btn.addEventListener('click', function() { openModal(p.id, p.nombre); });
+    inp.appendChild(btn);
+  } else {
+    var wrap = makeEl('div', 'pct-wrap');
+    var input = makeEl('input');
+    input.type = 'number'; input.min = 0; input.max = 100;
+    input.className = 'pct-input' + (val !== undefined && val !== null ? ' filled' : '');
+    input.id = 'pi-' + p.id;
+    if (val !== undefined && val !== null) input.value = val;
+    input.placeholder = '—';
+    input.addEventListener('input', function() { onPct(p.id, input); });
+    input.addEventListener('focus', function() { input.select(); });
+    var sym = makeEl('span', 'pct-sym'); sym.textContent = '%';
+    wrap.appendChild(input); wrap.appendChild(sym);
+    inp.appendChild(wrap);
+  }
+  return row;
+}
+
+function toggle(body, arr) {
+  var open = body.classList.contains('open');
+  body.classList.toggle('open', !open);
+  arr.classList.toggle('open', !open);
+}
+
+// ---- PCT INPUT ----
+function onPct(pid, input) {
+  var v = parseFloat(input.value);
+  if (!isNaN(v) && v >= 0 && v <= 100) {
+    DATA[ROLE][pid] = v;
+    input.classList.add('filled');
+    setFilled(pid, true);
+  } else if (input.value === '') {
+    delete DATA[ROLE][pid];
+    input.classList.remove('filled');
+    setFilled(pid, false);
+  }
+  refreshProgress();
+}
+
+function setFilled(pid, filled) {
+  var row = document.getElementById('row-' + pid);
+  if (!row) return;
+  row.classList.toggle('filled', filled);
+  var dot = row.querySelector('.p-dot');
+  if (dot) { dot.className = 'p-dot ' + (filled ? 'done' : 'empty'); }
+}
+
+function refreshProgress() {
+  // Refresh all progress bars and stats by re-counting DOM dots
+  CHAPTERS.forEach(function(ch, ci) {
+    var allP = getPartidas(ch);
+    var filled = countFilled(allP, ROLE);
+    var pct = allP.length ? Math.round(filled / allP.length * 100) : 0;
+    var bf = document.getElementById('ch-bf-' + ci);
+    var st = document.getElementById('ch-st-' + ci);
+    if (bf) bf.style.width = pct + '%';
+    if (st) st.textContent = filled + '/' + allP.length;
+
+    if (ch.groups) {
+      ch.groups.forEach(function(g, gi) {
+        var gP = [];
+        (g.sections || []).forEach(function(s) { gP = gP.concat(s.partidas || []); });
+        gP = gP.concat(g.partidas || []);
+        var gf = countFilled(gP, ROLE);
+        var gpct = gP.length ? Math.round(gf / gP.length * 100) : 0;
+        var gbf = document.getElementById('grp-bf-' + ci + '-' + gi);
+        var gst = document.getElementById('grp-st-' + ci + '-' + gi);
+        if (gbf) gbf.style.width = gpct + '%';
+        if (gst) gst.textContent = gf + '/' + gP.length;
+
+        (g.sections || []).forEach(function(s, si) {
+          var sp = s.partidas || [];
+          var sf = countFilled(sp, ROLE);
+          var spct = sp.length ? Math.round(sf / sp.length * 100) : 0;
+          var key = ci + '-' + gi + '-' + si;
+          var sbf = document.getElementById('sec-bf-' + key);
+          var sst = document.getElementById('sec-st-' + key);
+          if (sbf) sbf.style.width = spct + '%';
+          if (sst) sst.textContent = sf + '/' + sp.length;
+        });
+      });
+    } else {
+      (ch.sections || []).forEach(function(s, si) {
+        var sp = s.partidas || [];
+        var sf = countFilled(sp, ROLE);
+        var spct = sp.length ? Math.round(sf / sp.length * 100) : 0;
+        var key = ci + '--1-' + si;
+        var sbf = document.getElementById('sec-bf-' + key);
+        var sst = document.getElementById('sec-st-' + key);
+        if (sbf) sbf.style.width = spct + '%';
+        if (sst) sst.textContent = sf + '/' + sp.length;
+      });
+    }
+  });
+  updateProgress();
+}
+
+function updateProgress() {
+  var all = [];
+  CHAPTERS.forEach(function(ch) { all = all.concat(getPartidas(ch)); });
+  var filled = countFilled(all, ROLE);
+  var pct = all.length ? Math.round(filled / all.length * 100) : 0;
+  document.getElementById('prog-txt').textContent = filled + ' / ' + all.length + ' partidas';
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+}
+
+// ---- MODAL ----
+function buildModalDOM() {
+  var body = document.getElementById('modal-body');
+  body.innerHTML = '';
+  // fila 1: por tipo
+  var qb = makeEl('div', 'quick-bar');
+  var lbl = makeEl('span', 'qb-lbl'); lbl.textContent = 'Tipo:'; qb.appendChild(lbl);
+  [['sm1','SM1'],['sm2','SM2'],['vul','VUL'],['emer','EME'],['all','Todas'],['none','Ninguna']].forEach(function(pair) {
+    var chip = makeEl('button', 'qchip ' + pair[0]); chip.textContent = pair[1];
+    chip.addEventListener('click', function() {
+      if (pair[0] === 'all') selAll();
+      else if (pair[0] === 'none') selNone();
+      else selByTipo(pair[0]);
+    });
+    qb.appendChild(chip);
+  });
+  body.appendChild(qb);
+  // fila 2: por manzana
+  var qb2 = makeEl('div', 'quick-bar');
+  qb2.style.marginTop = '-4px';
+  var lbl2 = makeEl('span', 'qb-lbl'); lbl2.textContent = 'Manzana:'; qb2.appendChild(lbl2);
+  ['D','C','B','A','F'].forEach(function(mz) {
+    var chip = makeEl('button', 'qchip mz'); chip.textContent = 'Mz ' + mz; chip.id = 'mzchip-' + mz;
+    chip.addEventListener('click', function() { selByManzana(mz); });
+    qb2.appendChild(chip);
+  });
+  body.appendChild(qb2);
+  // manzanas — built ONCE, selection synced separately
+  ['D','C','B','A','F'].forEach(function(mz) {
+    var mzData = MANZANAS[mz];
+    var wrap = makeEl('div', 'mz-wrap');
+    var lbl2 = makeEl('div', 'mz-lbl');
+    lbl2.appendChild(document.createTextNode('Manzana '));
+    var badge = makeEl('span', 'mz-badge'); badge.textContent = mz; lbl2.appendChild(badge);
+    wrap.appendChild(lbl2);
+    var grid = makeEl('div', 'lotes-grid');
+    Object.keys(mzData).forEach(function(k) {
+      var key = mz + '-' + k;
+      var tipo = mzData[k];
+      var cell = makeEl('div', 'lote ' + tipo);
+      cell.id = 'lc-' + key;
+      cell.textContent = k;
+      cell.addEventListener('click', function() { toggleLote(key); });
+      grid.appendChild(cell);
+    });
+    wrap.appendChild(grid);
+    body.appendChild(wrap);
+  });
+  MODAL_BUILT = true;
+}
+
+function syncModalSel() {
+  // Clear all, then mark selected — O(total_lotes) touch, no DOM creation
+  document.querySelectorAll('#modal-body .lote').forEach(function(c) { c.classList.remove('sel'); });
+  MODAL_SEL.forEach(function(n) {
+    var c = document.getElementById('lc-' + n);
+    if (c) c.classList.add('sel');
+  });
+  document.getElementById('modal-n').textContent = MODAL_SEL.length;
+}
+
+function openModal(pid, nombre) {
+  MODAL_PID = pid;
+  var existing = (DATA[ROLE] && DATA[ROLE][pid]) ? DATA[ROLE][pid] : [];
+  MODAL_SEL = existing.slice();
+  document.getElementById('modal-sub').textContent = nombre;
+  if (!MODAL_BUILT) buildModalDOM();  // build DOM only on first open
+  syncModalSel();                      // fast: just toggle CSS classes
+  document.getElementById('modal').classList.add('open');
+}
+
+function toggleLote(n) {
+  var idx = MODAL_SEL.indexOf(n);
+  if (idx >= 0) MODAL_SEL.splice(idx, 1); else MODAL_SEL.push(n);
+  var c = document.getElementById('lc-' + n);
+  if (c) c.classList.toggle('sel', idx < 0);
+  document.getElementById('modal-n').textContent = MODAL_SEL.length;
+}
+function selByTipo(tipo) {
+  Object.keys(MANZANAS).forEach(function(mz) {
+    Object.keys(MANZANAS[mz]).forEach(function(k) {
+      if (MANZANAS[mz][k] === tipo) {
+        var key = mz + '-' + k;
+        if (MODAL_SEL.indexOf(key) < 0) { MODAL_SEL.push(key); }
+        var c = document.getElementById('lc-' + key);
+        if (c) c.classList.add('sel');
+      }
+    });
+  });
+  document.getElementById('modal-n').textContent = MODAL_SEL.length;
+}
+function selByManzana(mz) {
+  var keys = Object.keys(MANZANAS[mz] || {}).map(function(k){ return mz + '-' + k; });
+  // toggle: si todos ya están seleccionados → deseleccionar, si no → seleccionar
+  var allSel = keys.every(function(key){ return MODAL_SEL.indexOf(key) >= 0; });
+  keys.forEach(function(key) {
+    var idx = MODAL_SEL.indexOf(key);
+    if (allSel) { if (idx >= 0) MODAL_SEL.splice(idx, 1); }
+    else        { if (idx < 0) MODAL_SEL.push(key); }
+  });
+  // actualizar visual del chip
+  ['D','C','B','A','F'].forEach(function(m) {
+    var chip = document.getElementById('mzchip-' + m);
+    if (!chip) return;
+    var mKeys = Object.keys(MANZANAS[m]||{}).map(function(k){ return m + '-' + k; });
+    var mAll = mKeys.every(function(key){ return MODAL_SEL.indexOf(key) >= 0; });
+    chip.classList.toggle('active', mAll);
+  });
+  syncModalSel();
+}
+function selAll() {
+  MODAL_SEL = [];
+  Object.keys(MANZANAS).forEach(function(mz) {
+    Object.keys(MANZANAS[mz]).forEach(function(k) { MODAL_SEL.push(mz + '-' + k); });
+  });
+  document.querySelectorAll('.lote').forEach(function(c) { c.classList.add('sel'); });
+  ['D','C','B','A','F'].forEach(function(m) {
+    var chip = document.getElementById('mzchip-' + m); if (chip) chip.classList.add('active');
+  });
+  document.getElementById('modal-n').textContent = MODAL_SEL.length;
+}
+function selNone() {
+  MODAL_SEL = [];
+  document.querySelectorAll('.lote').forEach(function(c) { c.classList.remove('sel'); });
+  ['D','C','B','A','F'].forEach(function(m) {
+    var chip = document.getElementById('mzchip-' + m); if (chip) chip.classList.remove('active');
+  });
+  document.getElementById('modal-n').textContent = 0;
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+function confirmModal() {
+  var pid = MODAL_PID;
+  DATA[ROLE][pid] = MODAL_SEL.slice();
+  var cnt = MODAL_SEL.length;
+  var btn = document.getElementById('vb-' + pid);
+  if (btn) {
+    btn.className = 'viv-btn' + (cnt > 0 ? ' filled' : '');
+    var span = btn.querySelector('.viv-cnt');
+    if (span) span.textContent = cnt > 0 ? cnt : '';
+  }
+  setFilled(pid, cnt > 0);
+  refreshProgress();
+  closeModal();
+}
+
+// ---- GUARDAR EN SHEET ----
+function doSave() {
+  if (!CURRENT_SEMANA) {
+    alert('No hay semana activa. Espera a que cargue o vuelve a intentar.');
+    return;
+  }
+  var st = document.getElementById('save-st');
+  st.textContent = 'Guardando…'; st.style.color = '#8899bb';
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action: 'saveAuditData', semana: CURRENT_SEMANA, rol: ROLE, datos: DATA[ROLE] })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.ok) {
+        st.textContent = '✓ Guardado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+        st.style.color = '#1a9b5a';
+      } else {
+        st.textContent = '⚠ Error al guardar: ' + (d && d.error ? d.error : 'desconocido');
+        st.style.color = '#cc4422';
+      }
+    })
+    .catch(function(){
+      st.textContent = '⚠ Sin conexión';
+      st.style.color = '#cc4422';
+    });
+}
+
+// ---- COMPARACIÓN ----
+function showCompare() {
+  document.getElementById('btn-nav-audit').classList.remove('active');
+  document.getElementById('btn-nav-cmp').classList.add('active');
+  var con = document.getElementById('cmp-container');
+  con.innerHTML = '';
+
+  var allP = [];
+  CHAPTERS.forEach(function(ch) { allP = allP.concat(getPartidas(ch)); });
+
+  var diffs = 0, ok = 0, onlyJt = 0, onlyCal = 0;
+
+  CHAPTERS.forEach(function(ch) {
+    var chP = getPartidas(ch);
+    var card = makeEl('div', 'cmp-card');
+    var top = makeEl('div', 'cmp-top');
+    var tit = makeEl('div', 'cmp-top-tit'); tit.textContent = ch.titulo; top.appendChild(tit);
+    card.appendChild(top);
+
+    var hrow = makeEl('div', 'cmp-hrow');
+    hrow.innerHTML = '<span>Partida</span><span style="text-align:center">JT</span><span style="text-align:center">Calidad</span><span style="text-align:center">Dif</span>';
+    card.appendChild(hrow);
+
+    chP.forEach(function(p) {
+      var jv = DATA.jt[p.id], cv = DATA.cal[p.id];
+      var hasJt = hasVal('jt', p.id), hasCal = hasVal('cal', p.id);
+      if (!hasJt && !hasCal) return;
+
+      var row = makeEl('div', 'cmp-row');
+      var pn = makeEl('div', 'cmp-pn');
+      var pnum = makeEl('span', 'cmp-pnum'); pnum.textContent = '#' + p.id; pn.appendChild(pnum);
+      pn.appendChild(document.createTextNode(p.nombre));
+      row.appendChild(pn);
+
+      function fmtVal(v, tipo) {
+        if (v === undefined || v === null) return '—';
+        if (tipo === 'viv') return Array.isArray(v) ? v.length + ' viv' : '—';
+        return v + '%';
+      }
+      function eqVal(jv, cv, tipo) {
+        if (!hasJt || !hasCal) return false;
+        if (tipo === 'viv') {
+          var ja = Array.isArray
