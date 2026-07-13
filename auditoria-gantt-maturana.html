@@ -846,21 +846,23 @@ function doSave() {
   st.textContent = 'Guardando…'; st.style.color = '#8899bb';
   fetch(SCRIPT_URL, {
     method: 'POST',
+    redirect: 'follow',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ action: 'saveAuditData', semana: CURRENT_SEMANA, rol: ROLE, datos: DATA[ROLE] })
   })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
+    .then(function(r){ return r.text(); })
+    .then(function(t){
+      var d; try { d = JSON.parse(t); } catch(e) { d = null; }
       if (d && d.ok) {
         st.textContent = '✓ Guardado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
         st.style.color = '#1a9b5a';
       } else {
-        st.textContent = '⚠ Error al guardar: ' + (d && d.error ? d.error : 'desconocido');
+        st.textContent = '⚠ Error: ' + (d && d.error ? d.error : (t ? t.slice(0,60) : 'desconocido'));
         st.style.color = '#cc4422';
       }
     })
-    .catch(function(){
-      st.textContent = '⚠ Sin conexión';
+    .catch(function(err){
+      st.textContent = '⚠ Sin conexión (' + (err && err.message ? err.message.slice(0,40) : 'red') + ')';
       st.style.color = '#cc4422';
     });
 }
@@ -869,6 +871,7 @@ function doSave() {
 function showCompare() {
   document.getElementById('btn-nav-audit').classList.remove('active');
   document.getElementById('btn-nav-cmp').classList.add('active');
+  showScreen('sc-compare');
   var con = document.getElementById('cmp-container');
   con.innerHTML = '';
 
