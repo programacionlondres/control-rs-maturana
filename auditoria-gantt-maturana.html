@@ -844,13 +844,11 @@ function doSave() {
   }
   var st = document.getElementById('save-st');
   st.textContent = 'Guardando…'; st.style.color = '#8899bb';
-  var saveUrl = SCRIPT_URL
-    + '?action=saveAuditData'
-    + '&semana=' + encodeURIComponent(CURRENT_SEMANA)
-    + '&rol='    + encodeURIComponent(ROLE)
-    + '&datos='  + encodeURIComponent(JSON.stringify(DATA[ROLE]))
-    + '&_='      + Date.now();
-  fetch(saveUrl)
+  fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type': 'text/plain'},
+    body: JSON.stringify({action: 'saveAuditData', semana: CURRENT_SEMANA, rol: ROLE, datos: DATA[ROLE]})
+  })
     .then(function(r){ return r.json(); })
     .then(function(d){
       if (d && d.ok) {
