@@ -712,14 +712,14 @@ function buildModalDOM() {
   var qb2 = makeEl('div', 'quick-bar');
   qb2.style.marginTop = '-4px';
   var lbl2 = makeEl('span', 'qb-lbl'); lbl2.textContent = 'Manzana:'; qb2.appendChild(lbl2);
-  ['D','C','B','A','F'].forEach(function(mz) {
+  ['A','B','C','D','E','F','G','H','J','K'].forEach(function(mz) {
     var chip = makeEl('button', 'qchip mz'); chip.textContent = 'Mz ' + mz; chip.id = 'mzchip-' + mz;
     chip.addEventListener('click', function() { selByManzana(mz); });
     qb2.appendChild(chip);
   });
   body.appendChild(qb2);
   // manzanas — built ONCE, selection synced separately
-  ['D','C','B','A','F'].forEach(function(mz) {
+  ['A','B','C','D','E','F','G','H','J','K'].forEach(function(mz) {
     var mzData = MANZANAS[mz];
     var wrap = makeEl('div', 'mz-wrap');
     var lbl2 = makeEl('div', 'mz-lbl');
@@ -792,7 +792,7 @@ function selByManzana(mz) {
     else        { if (idx < 0) MODAL_SEL.push(key); }
   });
   // actualizar visual del chip
-  ['D','C','B','A','F'].forEach(function(m) {
+  ['A','B','C','D','E','F','G','H','J','K'].forEach(function(m) {
     var chip = document.getElementById('mzchip-' + m);
     if (!chip) return;
     var mKeys = Object.keys(MANZANAS[m]||{}).map(function(k){ return m + '-' + k; });
@@ -807,7 +807,7 @@ function selAll() {
     Object.keys(MANZANAS[mz]).forEach(function(k) { MODAL_SEL.push(mz + '-' + k); });
   });
   document.querySelectorAll('.lote').forEach(function(c) { c.classList.add('sel'); });
-  ['D','C','B','A','F'].forEach(function(m) {
+  ['A','B','C','D','E','F','G','H','J','K'].forEach(function(m) {
     var chip = document.getElementById('mzchip-' + m); if (chip) chip.classList.add('active');
   });
   document.getElementById('modal-n').textContent = MODAL_SEL.length;
@@ -815,7 +815,7 @@ function selAll() {
 function selNone() {
   MODAL_SEL = [];
   document.querySelectorAll('.lote').forEach(function(c) { c.classList.remove('sel'); });
-  ['D','C','B','A','F'].forEach(function(m) {
+  ['A','B','C','D','E','F','G','H','J','K'].forEach(function(m) {
     var chip = document.getElementById('mzchip-' + m); if (chip) chip.classList.remove('active');
   });
   document.getElementById('modal-n').textContent = 0;
