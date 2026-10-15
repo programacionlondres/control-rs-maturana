@@ -1918,35 +1918,55 @@ inicializarRS();
   });
 })();
 
+var INF_COLS=[["sog","&ge;SOG","#6B5FA8"],["sg","&ge;SG","#185FA5"],["r0","&ge;R0","#BA7517"],["fr1","&ge;FR1","#8A6D1F"],["r1","&ge;R1","#3B6D11"],["frf","&ge;FRF","#2E7D5B"],["rf","RF","#1D9E75"]];
+function infCeldas(c,tot,pad,bold){
+  var h="<td style='padding:"+pad+";text-align:center'>"+tot+"</td>";
+  for(var k=0;k<INF_COLS.length;k++){
+    var key=INF_COLS[k][0];
+    h+="<td style='padding:"+pad+";text-align:center;color:"+INF_COLS[k][2]+(key==="rf"||bold?";font-weight:600":"")+"'>"+c[key]+"</td>";
+  }
+  return h;
+}
+function infCab(pad,primera){
+  var h="<tr style='background:#f5f5f3'><th style='padding:"+pad+";text-align:left;border-bottom:1px solid #ddd'>"+primera+"</th><th style='padding:"+pad+";text-align:center;border-bottom:1px solid #ddd'>Total</th>";
+  for(var k=0;k<INF_COLS.length;k++)h+="<th style='padding:"+pad+";text-align:center;border-bottom:1px solid #ddd;color:"+INF_COLS[k][2]+"'>"+INF_COLS[k][1]+"</th>";
+  return h+"</tr>";
+}
+function cumVacio(){return {sog:0,sg:0,r0:0,fr1:0,r1:0,frf:0,rf:0};}
+function cumSumar(c,u){ // acumulado: un lote cuenta en todos los hitos hasta el que alcanzo
+  if(!u)return;
+  for(var k=0;k<ET.length;k++)if(EN[ET[k]]<=EN[u])c[ET[k]]++;
+}
 function abrirInformeSemanal(){
   var hoy=new Date();
   var diasN=["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   var mesesN=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   document.getElementById("inf-semana").textContent=diasN[hoy.getDay()]+" "+hoy.getDate()+" de "+mesesN[hoy.getMonth()]+" "+hoy.getFullYear();
-  var tot_g=0,sg_g=0,r0_g=0,r1_g=0,rf_g=0;
-  var html="<tr style='background:#f5f5f3'><th style='padding:5px 6px;text-align:left;border-bottom:1px solid #ddd'>Manzana</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd'>Total</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#185FA5'>&ge;SG</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#BA7517'>&ge;R0</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#3B6D11'>&ge;R1</th><th style='padding:5px;text-align:center;border-bottom:1px solid #ddd;color:#1D9E75'>RF</th></tr>";
+  var tot_g=0,cg=cumVacio();
+  var html=infCab("5px 4px","Manzana");
   for(var i=0;i<MANZANAS.length;i++){
-    var mz=MANZANAS[i],sg=0,r0=0,r1=0,rf=0;
-    for(var j=0;j<mz.lotes.length;j++){var u=bk(uH(gH(mz.id,mz.lotes[j])));if(u==="sg")sg++;else if(u==="r0"||u==="r0obs")r0++;else if(u==="r1")r1++;else if(u==="rf")rf++;}
-    var tot=mz.lotes.length,acSG=sg+r0+r1+rf,acR0=r0+r1+rf,acR1=r1+rf;
-    tot_g+=tot;sg_g+=acSG;r0_g+=acR0;r1_g+=acR1;rf_g+=rf;
-    html+="<tr style='border-bottom:1px solid #eee'><td style='padding:5px 6px;font-weight:500'>"+mz.nombre+"</td><td style='padding:5px;text-align:center'>"+tot+"</td><td style='padding:5px;text-align:center;color:#185FA5'>"+acSG+"</td><td style='padding:5px;text-align:center;color:#BA7517'>"+acR0+"</td><td style='padding:5px;text-align:center;color:#3B6D11'>"+acR1+"</td><td style='padding:5px;text-align:center;color:#1D9E75;font-weight:600'>"+rf+"</td></tr>";
+    var mz=MANZANAS[i],c=cumVacio();
+    for(var j=0;j<mz.lotes.length;j++)cumSumar(c,uH(gH(mz.id,mz.lotes[j])));
+    tot_g+=mz.lotes.length;
+    for(var k=0;k<ET.length;k++)cg[ET[k]]+=c[ET[k]];
+    html+="<tr style='border-bottom:1px solid #eee'><td style='padding:5px 4px;font-weight:500'>"+mz.nombre+"</td>"+infCeldas(c,mz.lotes.length,"5px 4px",false)+"</tr>";
   }
-  html+="<tr style='background:#f0f7ed;font-weight:600'><td style='padding:5px 6px'>TOTAL</td><td style='padding:5px;text-align:center'>"+tot_g+"</td><td style='padding:5px;text-align:center;color:#185FA5'>"+sg_g+"</td><td style='padding:5px;text-align:center;color:#BA7517'>"+r0_g+"</td><td style='padding:5px;text-align:center;color:#3B6D11'>"+r1_g+"</td><td style='padding:5px;text-align:center;color:#1D9E75'>"+rf_g+"</td></tr>";
+  html+="<tr style='background:#f0f7ed;font-weight:600'><td style='padding:5px 4px'>TOTAL</td>"+infCeldas(cg,tot_g,"5px 4px",true)+"</tr>";
   document.getElementById("inf-tabla").innerHTML=html;
   // Tabla tipología
   var tLbl={sm1:"SM1",sm2:"SM2",vul:"Vulnerable",emer:"Emergente",mov:"Mov.Red."};
   var d2=tipCnt(),cnt2=d2.cnt,tot2=d2.tot,tipos2=d2.tipos;
-  var tsg2=0,tr02=0,tr12=0,trf2=0,ttot2=0;
-  tipos2.forEach(function(t){tsg2+=cnt2[t].sg;tr02+=cnt2[t].r0;tr12+=cnt2[t].r1;trf2+=cnt2[t].rf;ttot2+=tot2[t];});
+  var ct=cumVacio(),ttot2=0;
+  tipos2.forEach(function(t){for(var k=0;k<ET.length;k++)ct[ET[k]]+=cnt2[t][ET[k]];ttot2+=tot2[t];});
   var th="<div style='font-size:10px;font-weight:700;color:#444;margin:.4rem 0 .25rem'>Por Tipología</div>";
   th+="<table style='width:100%;border-collapse:collapse;font-size:11px;margin-bottom:.5rem'>";
-  th+="<tr style='background:#f5f5f3'><th style='padding:4px 6px;text-align:left;border-bottom:1px solid #ddd'>Tipo</th><th style='padding:4px;text-align:center;border-bottom:1px solid #ddd'>Total</th><th style='padding:4px;text-align:center;border-bottom:1px solid #ddd;color:#185FA5'>&ge;SG</th><th style='padding:4px;text-align:center;border-bottom:1px solid #ddd;color:#BA7517'>&ge;R0</th><th style='padding:4px;text-align:center;border-bottom:1px solid #ddd;color:#3B6D11'>&ge;R1</th><th style='padding:4px;text-align:center;border-bottom:1px solid #ddd;color:#1D9E75'>RF</th></tr>";
+  th+=infCab("4px","Tipo");
   tipos2.forEach(function(t){
     if(tot2[t]===0)return;
-    th+="<tr style='border-bottom:1px solid #eee'><td style='padding:4px 6px;font-weight:500'>"+tLbl[t]+"</td><td style='padding:4px;text-align:center'>"+tot2[t]+"</td><td style='padding:4px;text-align:center;color:#185FA5'>"+cnt2[t].sg+"</td><td style='padding:4px;text-align:center;color:#BA7517'>"+cnt2[t].r0+"</td><td style='padding:4px;text-align:center;color:#3B6D11'>"+cnt2[t].r1+"</td><td style='padding:4px;text-align:center;color:#1D9E75;font-weight:600'>"+cnt2[t].rf+"</td></tr>";
+    th+="<tr style='border-bottom:1px solid #eee'><td style='padding:4px;font-weight:500'>"+tLbl[t]+"</td>"+infCeldas(cnt2[t],tot2[t],"4px",false)+"</tr>";
   });
-  th+="<tr style='background:#f0f7ed;font-weight:600'><td style='padding:4px 6px'>Total</td><td style='padding:4px;text-align:center'>"+ttot2+"</td><td style='padding:4px;text-align:center;color:#185FA5'>"+tsg2+"</td><td style='padding:4px;text-align:center;color:#BA7517'>"+tr02+"</td><td style='padding:4px;text-align:center;color:#3B6D11'>"+tr12+"</td><td style='padding:4px;text-align:center;color:#1D9E75'>"+trf2+"</td></tr></table>";
+  th+="<tr style='background:#f0f7ed;font-weight:600'><td style='padding:4px'>Total</td>"+infCeldas(ct,ttot2,"4px",true)+"</tr></table>";
+  th+="<div style='font-size:9px;color:#777;margin-bottom:.4rem;line-height:1.4'>SOG = Sello de obra gruesa · SG = Sello gris · R0 · FR1 = Fichaje R1 · R1 · FRF = Fichaje RF · RF. Cada columna cuenta los lotes que ya alcanzaron ese hito o uno posterior (acumulado).</div>";
   document.getElementById("inf-tabla-tip").innerHTML=th;
   document.getElementById("inf-nota").textContent="Control de Rs · Constructora Londres · Enrique Maturana";
   document.getElementById("mr-sem").classList.add("v");
@@ -2094,7 +2114,7 @@ function cerrarDiaRs(){
 function tipCnt(){
   var tipos=["sm1","sm2","vul","emer","mov"];
   var cnt={},tot={};
-  tipos.forEach(function(t){cnt[t]={nd:0,sg:0,r0:0,r1:0,rf:0};tot[t]=0;});
+  tipos.forEach(function(t){var o=cumVacio();o.nd=0;cnt[t]=o;tot[t]=0;});
   for(var i=0;i<MANZANAS.length;i++){
     var mz=MANZANAS[i];
     for(var j=0;j<mz.lotes.length;j++){
@@ -2102,12 +2122,9 @@ function tipCnt(){
       var tip=(TIPOLOGIAS[mz.id]&&TIPOLOGIAS[mz.id][l])||"sm1";
       if(!cnt[tip])continue;
       tot[tip]++;
-      var u=bk(uH(gH(mz.id,l)));
+      var u=uH(gH(mz.id,l));
       if(!u){cnt[tip].nd++;}
-      else if(u==="sg"){cnt[tip].sg++;}
-      else if(u==="r0"||u==="r0obs"){cnt[tip].sg++;cnt[tip].r0++;}
-      else if(u==="r1"){cnt[tip].sg++;cnt[tip].r0++;cnt[tip].r1++;}
-      else if(u==="rf"){cnt[tip].sg++;cnt[tip].r0++;cnt[tip].r1++;cnt[tip].rf++;}
+      else cumSumar(cnt[tip],u);
     }
   }
   return{cnt:cnt,tot:tot,tipos:tipos};
@@ -2115,8 +2132,8 @@ function tipCnt(){
 function mostrarTipologia(){
   var tipos=["sm1","sm2","vul","emer","mov"];
   var tLbl={sm1:"SM1",sm2:"SM2",vul:"Vulnerable",emer:"Emergente",mov:"Mov.Red."};
-  var col=["nd","sg","r0","r1","rf"];
-  var cLbl={nd:"S/I",sg:"≥SG",r0:"≥R0",r1:"≥R1",rf:"RF"};
+  var col=["nd","sog","sg","r0","fr1","r1","frf","rf"];
+  var cLbl={nd:"S/I",sog:"≥SOG",sg:"≥SG",r0:"≥R0",fr1:"≥FR1",r1:"≥R1",frf:"≥FRF",rf:"RF"};
   var d=tipCnt(),cnt=d.cnt,tot=d.tot;
   var html='<table class="tip-table"><thead><tr><th>Tipología</th>';
   col.forEach(function(c){html+='<th>'+cLbl[c]+'</th>';});
